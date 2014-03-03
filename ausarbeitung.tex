@@ -5,7 +5,7 @@
 \usepackage{amsmath}
 \usepackage{amsfonts}
 \usepackage{amssymb}
-\usepackage{url}
+%\usepackage{url}
 \usepackage{hyperref}
 
 
@@ -16,40 +16,99 @@
 
 \section*{Abstract}
 
-\part{Color-Exchange}
-
 \section{Einleitung}
- 
-\subsection{Beschreibung des Filters aus Nutzersicht}
-Die Beschreibung des Filters in der GIMP-Dokumentation "Dieses Filter ersetzt eine Farbe durch eine andere."\footnote{\url{http://docs.gimp.org/de/plug-in-exchange.html}} fasst die Grundidee des Filters grob zusammen. Tatsächlich ermöglicht das Filter nicht nur exakt eine Farbe durch eine andere zu ersetzen, sondern auch ähnliche Farben durch eine andere zu ersetzen, wobei in diesem Fall die ersetzende Farbe der jeweiligen Abweichung der im Bild vorhandenen von der zu ersetzenden Farbe angepasst wird.
-\subsection{Algorithmus} 
-%Beschreibung Algorithmus allgemeinsprachlich, 
-
-%Pseudocode, visuell
-\subsection{Zielsetzung}
+%Standvorher
+%Zielsetzung
 %Portierung von GIMP nach GEGL
 %Parallelisierung mittels OpenMP
-\section{Portierung}
+
+\section{Filter}
+\subsection{Color Exchange}
+\paragraph{Filter aus Nutzersicht}
+Die Beschreibung des Filters in der GIMP-Dokumentation "Dieses Filter ersetzt eine Farbe durch eine andere."\footnote{\url{http://docs.gimp.org/de/plug-in-exchange.html}} fasst die Grundidee des Filters grob zusammen. Tatsächlich ermöglicht das Filter nicht nur exakt eine Farbe durch eine andere zu ersetzen, sondern auch ähnliche Farben durch eine andere zu ersetzen, wobei in diesem Fall die ersetzende Farbe der jeweiligen Abweichung der im Bild vorhandenen von der zu ersetzenden Farbe angepasst wird.
+\paragraph{Algorithmus} 
+%Beschreibung Algorithmus allgemeinsprachlich, 
+%Pseudocode, visuell
+\paragraph{Portierung}
 %Beibehaltung der Farbrepräsentation in RGBA u8
 %Beibehaltung bereits in GIMP vorhandener Bug 
+\paragraph{Parallelisierung}
 
-\section{Parallelisierung}
-\section{Auswertung}
 
-\subsection{Korrektheit}
- 
+\subsection{Glass Tile}
+\paragraph{Beschreibung des Filters aus Nutzersicht}
+\paragraph{Algorithmus} 
+%Beschreibung Algorithmus allgemeinsprachlich, 
+%Pseudocode, visuell
+\paragraph{Portierung}
+\paragraph{Parallelisierung}
+
+
+
+\subsection{Neon}
+\paragraph{Beschreibung des Filters aus Nutzersicht}
+\paragraph{Algorithmus} 
+%Beschreibung Algorithmus allgemeinsprachlich, 
+%Pseudocode, visuell
+\paragraph{Portierung}
+\paragraph{Parallelisierung}
+
+
+
+\subsection{Selective Gaussian Blur}
+\paragraph{Filter aus Nutzersicht}
+\paragraph{Algorithmus} 
+%Beschreibung Algorithmus allgemeinsprachlich, 
+%Pseudocode, visuell
+\paragraph{Portierung}
+\paragraph{Parallelisierung}
+
+
+\section{Evaluation der Ergebnisse}
+\subsection{Color Exchange}
+\paragraph{Korrektheit}
 %Bild Eingabe (Duck / matting-global / car-stack?)
 %Vergleich Ausgabe bei Eingabe mit gleichen Parametern GIMP – GEGL Bilder
 %Ergebnis vom Diff
-\subsection{Laufzeit}
- 
+\paragraph{Laufzeit}
 %X Durchläufe in Diagram abtragen?
 %System beschreiben (Hardware, Software, Umgebungsvariablen) !!!
 %Boxplots !!!
 %Statistische Analyse ?!
 %Aus Debug-Output Diagramm erstellen um Anteil des Filters an Gesamtlaufzeit zu verdeutlichen
-\section{Evaluation der Ergebnisse}
-
+\subsection{Glass Tile}
+\paragraph{Korrektheit}
+%Bild Eingabe (Duck / matting-global / car-stack?)
+%Vergleich Ausgabe bei Eingabe mit gleichen Parametern GIMP – GEGL Bilder
+%Ergebnis vom Diff
+\paragraph{Laufzeit}
+%X Durchläufe in Diagram abtragen?
+%System beschreiben (Hardware, Software, Umgebungsvariablen) !!!
+%Boxplots !!!
+%Statistische Analyse ?!
+%Aus Debug-Output Diagramm erstellen um Anteil des Filters an Gesamtlaufzeit zu verdeutlichen
+\subsection{Neon}
+\paragraph{Korrektheit}
+%Bild Eingabe (Duck / matting-global / car-stack?)
+%Vergleich Ausgabe bei Eingabe mit gleichen Parametern GIMP – GEGL Bilder
+%Ergebnis vom Diff
+\paragraph{Laufzeit}
+%X Durchläufe in Diagram abtragen?
+%System beschreiben (Hardware, Software, Umgebungsvariablen) !!!
+%Boxplots !!!
+%Statistische Analyse ?!
+%Aus Debug-Output Diagramm erstellen um Anteil des Filters an Gesamtlaufzeit zu verdeutlichen
+\subsection{Selective Gaussian Blur}
+\paragraph{Korrektheit}
+%Bild Eingabe (Duck / matting-global / car-stack?)
+%Vergleich Ausgabe bei Eingabe mit gleichen Parametern GIMP – GEGL Bilder
+%Ergebnis vom Diff
+\paragraph{Laufzeit}
+%X Durchläufe in Diagram abtragen?
+%System beschreiben (Hardware, Software, Umgebungsvariablen) !!!
+%Boxplots !!!
+%Statistische Analyse ?!
+%Aus Debug-Output Diagramm erstellen um Anteil des Filters an Gesamtlaufzeit zu verdeutlichen
 %Warum wird es mit OpenMP langsamer?
 \section{Ausblick}
 %Umstellung auf Floats
