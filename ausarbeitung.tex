@@ -16,42 +16,92 @@
 
 \section*{Abstract}
 
-\part{Color-Exchange}
 
 \section{Einleitung}
  
-\subsection{Beschreibung des Filters aus Nutzersicht}
-Die Beschreibung des Filters in der GIMP-Dokumentation "Dieses Filter ersetzt eine Farbe durch eine andere."\footnote{\url{http://docs.gimp.org/de/plug-in-exchange.html}} fasst die Grundidee des Filters grob zusammen. Tatsächlich ermöglicht das Filter nicht nur exakt eine Farbe durch eine andere zu ersetzen, sondern auch ähnliche Farben durch eine andere zu ersetzen, wobei in diesem Fall die ersetzende Farbe der jeweiligen Abweichung der im Bild vorhandenen von der zu ersetzenden Farbe angepasst wird.
-\subsection{Algorithmus} 
-%Beschreibung Algorithmus allgemeinsprachlich, 
-
-%Pseudocode, visuell
-\subsection{Zielsetzung}
+\subsection{Zielsetzung} % Der Punkt ist eventuell redundant !!!
 %Portierung von GIMP nach GEGL
 %Parallelisierung mittels OpenMP
-\section{Portierung}
+%Parallelisierung mittels OpenCL
+
+\subsection{Color Exchange} 
+\subsubsection{Beschreibung des Filters aus Nutzersicht}
+Die Beschreibung des Filters in der GIMP-Dokumentation "Dieses Filter ersetzt eine Farbe durch eine andere."\footnote{\url{http://docs.gimp.org/de/plug-in-exchange.html}} fasst die Grundidee des Filters grob zusammen. Tatsächlich ermöglicht das Filter nicht nur exakt eine Farbe durch eine andere zu ersetzen, sondern auch ähnliche Farben durch eine andere zu ersetzen, wobei in diesem Fall die ersetzende Farbe der jeweiligen Abweichung der im Bild vorhandenen von der zu ersetzenden Farbe angepasst wird.
+\subsubsection{Algorithmus} 
+%Beschreibung Algorithmus allgemeinsprachlich, 
+%Pseudocode, visuell
+\subsubsection{Portierung}
 %Beibehaltung der Farbrepräsentation in RGBA u8
 %Beibehaltung bereits in GIMP vorhandener Bug 
 
-\section{Parallelisierung}
-\section{Auswertung}
+\subsection{Glass Tile} 
+\subsubsection{Beschreibung des Filters aus Nutzersicht}
+\subsubsection{Algorithmus} 
+%Beschreibung Algorithmus allgemeinsprachlich, 
+%Pseudocode, visuell
+\subsubsection{Portierung}
 
-\subsection{Korrektheit}
- 
+\subsection{Neon} 
+\subsubsection{Beschreibung des Filters aus Nutzersicht}
+\subsubsection{Algorithmus} 
+%Beschreibung Algorithmus allgemeinsprachlich, 
+%Pseudocode, visuell
+\subsubsection{Portierung}
+
+\subsection{Selective Gaussion Blur} 
+\subsubsection{Beschreibung des Filters aus Nutzersicht}
+\subsubsection{Algorithmus} 
+%Beschreibung Algorithmus allgemeinsprachlich, 
+%Pseudocode, visuell
+\subsubsection{Portierung}
+\section{Parallelisierung}
+
+
+\section{Auswertung}
+\subsection{Color Exchange}
+\subsubsection{Korrektheit}
 %Bild Eingabe (Duck / matting-global / car-stack?)
 %Vergleich Ausgabe bei Eingabe mit gleichen Parametern GIMP – GEGL Bilder
 %Ergebnis vom Diff
-\subsection{Laufzeit}
- 
+\subsubsection{Laufzeit}
+
+\subsection{Glass Tile}
+\subsubsection{Korrektheit}
+%Bild Eingabe (Duck / matting-global / car-stack?)
+%Vergleich Ausgabe bei Eingabe mit gleichen Parametern GIMP – GEGL Bilder
+%Ergebnis vom Diff
+\subsubsection{Laufzeit}
+
+\subsection{Neon}
+\subsubsection{Korrektheit}
+%Bild Eingabe (Duck / matting-global / car-stack?)
+%Vergleich Ausgabe bei Eingabe mit gleichen Parametern GIMP – GEGL Bilder
+%Ergebnis vom Diff
+\subsubsection{Laufzeit}
+
+\subsection{Selective Gaussian Blurr}
+\subsubsection{Korrektheit}
+%Bild Eingabe (Duck / matting-global / car-stack?)
+%Vergleich Ausgabe bei Eingabe mit gleichen Parametern GIMP – GEGL Bilder
+%Ergebnis vom Diff
+\subsubsection{Laufzeit}
 %X Durchläufe in Diagram abtragen?
 %System beschreiben (Hardware, Software, Umgebungsvariablen) !!!
 %Boxplots !!!
 %Statistische Analyse ?!
 %Aus Debug-Output Diagramm erstellen um Anteil des Filters an Gesamtlaufzeit zu verdeutlichen
+
+
 \section{Evaluation der Ergebnisse}
 
 %Warum wird es mit OpenMP langsamer?
+
+
 \section{Ausblick}
+\subsection{Color Exchange}
+\subsection{Glass Tile}
+\subsection{Neon}
+\subsection{Selective Gaussian Blurr}
 %Umstellung auf Floats
 %Behebung des Bugs
 %Implementierung in OpenCL
