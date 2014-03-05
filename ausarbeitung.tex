@@ -1,22 +1,46 @@
 %\documentclass[10pt,a4paper,twocolumn,draft]{article}
-\documentclass[10pt,a4paper,draft]{article}
+\documentclass[10pt,a4paper]{article}
 \usepackage[utf8]{inputenc}
 \usepackage[ngerman]{babel}
+\selectlanguage{ngerman}
 \usepackage{amsmath}
 \usepackage{amsfonts}
 \usepackage{amssymb}
 %\usepackage{url}
-\usepackage{hyperref}
 
+\usepackage{algorithm}
+\floatname{algorithm}{Algorithmus}
+\usepackage[noend]{algpseudocode}
+\usepackage{listings}
+\lstset{language=C,stepnumber=1,numbers=left,breaklines=true}
+\usepackage[shortcuts]{extdash}	% trenne auch Worte, die einen Bindestrich enthalten
+\providecommand{\abs}[1]{\lvert#1\rvert}
+\providecommand{\norm}[1]{\lVert#1\rVert}
+\usepackage{hyperref}
+\usepackage{color}
+\newcommand{\algorithmautorefname}{Algorithmus}
+
+\hyphenation{
+RGBA
+}
 
 \begin{document}
-\author{Gruppe 2}
+
+\author{Christian Busch
+\and
+Igor Karlinskiy
+\and
+Oleksandr Khomenko
+\and
+Sascha Denis Knöpfle
+}
 \title{Portierung und Parallelisierung mehrerer Filter von GIMP nach GEGL}
 \maketitle
 
-\section*{Abstract}
+\section*{Zusammenfassung}
 
 \section{Einleitung}
+%Das Anwenden von Filtern auf Bilddaten ist ein beliebter Anwendungsfall für Parallelisierung. Häufig muss ein und die selbe Operation auf jedem Pixel des Ausgabebildes angewandt werden. Nachdem sich Mehrkernprozessoren sowohl in Desktop-PCs als auch in Laptops und sogar günstigen Netbooks und Smart Phones als Standard etabliert haben ist davon auszugehen, dass eine Mehrheit der Nutzer von GEGL mehrere Threads gleichzeitig ausführen können. Hierdurch ergibt sich ein hohes Parallelisierungspotential. Nicht zuletzt sind insbesondere Grafikkarten hervorragend für diese Aufgabe geeignet.
 %Standvorher
 %Zielsetzung
 %Portierung von GIMP nach GEGL
@@ -25,15 +49,62 @@
 \section{Filter}
 \subsection{Color Exchange}
 \paragraph{Filter aus Nutzersicht}
-Die Beschreibung des Filters in der GIMP-Dokumentation "Dieses Filter ersetzt eine Farbe durch eine andere."\footnote{\url{http://docs.gimp.org/de/plug-in-exchange.html}} fasst die Grundidee des Filters grob zusammen. Tatsächlich ermöglicht das Filter nicht nur exakt eine Farbe durch eine andere zu ersetzen, sondern auch ähnliche Farben durch eine andere zu ersetzen, wobei in diesem Fall die ersetzende Farbe der jeweiligen Abweichung der im Bild vorhandenen von der zu ersetzenden Farbe angepasst wird.
-\paragraph{Algorithmus} 
-%Beschreibung Algorithmus allgemeinsprachlich, 
-%Pseudocode, visuell
-\paragraph{Portierung}
-%Beibehaltung der Farbrepräsentation in RGBA u8
-%Beibehaltung bereits in GIMP vorhandener Bug 
-\paragraph{Parallelisierung}
+Die Beschreibung des Filters in der GIMP\-/Dokumentation \glqq Dieses Filter ersetzt eine Farbe durch eine andere.\grqq\footnote{\url{http://docs.gimp.org/de/plug-in-exchange.html}} fasst die Grundidee des Filters grob zusammen. Tatsächlich ermöglicht das Filter nicht nur exakt eine Farbe durch eine andere zu ersetzen, sondern auch ähnliche Farben durch eine andere zu ersetzen, wobei in diesem Fall die ersetzende Farbe der jeweiligen Abweichung der im Bild vorhandenen von der zu ersetzenden Farbe angepasst wird.
 
+\paragraph{Algorithmus} 
+
+Das Filter prüft für jeden Pixel im Eingabebild jeweils für jeden Farbkanal ob der Farbwert nicht mehr als um den angegebenen Grenzwert von der Auswahlfarbe abweicht. Trifft dies zu wird jeweils der Farbwert addiert mit dem Betrag der Abweichung in das Ausgabebild geschrieben. Ist die Abweichung größer so wird der Wert dieses Farbkanals für jenen Pixel unverändert in das Ausgabebild übertragen. Ebenfalls unverändert bleibt der Alpha-Wert eines jeden Pixels.
+
+\begin{algorithm}[H]
+\caption{Pseudo-Code des \glqq Color Exchange\grqq-Algorithmus}
+\label{algo:exchange}
+\begin{algorithmic}[1]
+\ForAll{$pixel \in input$}
+  \ForAll{$color \in \{red, green, blue\}$}
+    \State $\delta_{color} \gets \abs{ pixel_{color} - from_{color}}$    
+    \If{$\delta_{color} \leq threshold_{color}$}  
+      \State $outputPixel_{color} \gets from_{color} + \delta_{color}$
+    \Else
+      \State $outputPixel_{color} \gets pixel_{color}$
+    \EndIf
+  \EndFor
+  \State $outputPixel_{alpha} \gets pixel_{alpha}$
+  \State write $outputPixel$ into $output$ at $pixel$'s index 
+\EndFor
+\end{algorithmic}
+\end{algorithm}
+
+\paragraph{Portierung}
+Bei der Portierung wurde vorerst die Farbrepräsentation in RGBA mit 8 Bit je Farbkanal beibehalten. Ferner enthält die Implementierung innerhalb von GIMP bereits einen Fehler. Dieser wurde bei der Portierung vorerst übernommen um einen Vergleich zwischen portierter und der ursprünglichen Variante dieses Filters ziehen zu können. Die fragliche Code-Stelle findet sich in Zeile 5 von \autoref{algo:exchange}. Durch die Verwendung des Betrages der Differenz an jener Stelle führen insbesondere hohe Schwellwerte zu unerwünschten Artefakten. Der Fehler wurde bereits den GEGL-Entwicklern mitgeteilt und wird von uns zu einem späteren Zeitpunkt korrigiert.
+
+\paragraph{Parallelisierung}
+Bei diesem Filter handelt es sich um einen sogenannten Punktfilter, was bedeutet, dass ein Ausgabepixel von genau einem Eingabepixel abhängt. Somit ist keine Koordination zwischen den einzelnen Threads notwendig. Dies ist ein glücklicher Umstand für die Parallalisierung, da diese besonders einfach ausfällt. So einfach, dass diese Klasse von Problemen in der Fachsprache \glqq embarassingly parallel\grqq also etwa \glqq peinlich parallel\grqq genannt wird.
+
+Zur Parallelisierung wurde OpenMP verwendet. Hierbei wurde das Eingabebild in Streifen auf die jeweiligen Threads aufgeteilt. Ein Thread berechnet somit jeweils einen oder mehrere Streifen aus beieinander liegenden Pixeln.
+
+\begin{algorithm}[H]
+\caption{Pseudo-Code des \glqq Color Exchange\grqq-Algorithmus}
+\label{algo:exchange_par}
+\begin{algorithmic}[1]
+\ForAll{$thread \in \{0, \ldots, numThreads - 1\}$}
+  %INSERT SOMETHING MEANINGFUL
+  \ForAll{$pixel \in input$}
+    \ForAll{$color \in \{red, green, blue\}$}
+      \State $\delta_{color} \gets \abs{ pixel_{color} - from_{color}}$    
+      \If{$\delta_{color} \leq threshold_{color}$}  
+        \State $outputPixel_{color} \gets from_{color} + \delta_{color}$
+      \Else
+        \State $outputPixel_{color} \gets pixel_{color}$
+      \EndIf
+    \EndFor
+    \State $outputPixel_{alpha} \gets pixel_{alpha}$
+    \State write $outputPixel$ into $output$ at $pixel$'s index 
+  \EndFor
+\EndFor
+\end{algorithmic}
+\end{algorithm}
+ 
+Eine weitere Möglichkeit bestünde darin jeweils die Betrachtung der Farbkanäle eines Pixels zu Parallelisieren. Diese Idee wurde jedoch als zu kleinschrittig verworfen.
 
 \subsection{Glass Tile}
 \paragraph{Beschreibung des Filters aus Nutzersicht}
@@ -114,4 +185,8 @@ Die Beschreibung des Filters in der GIMP-Dokumentation "Dieses Filter ersetzt ei
 %Umstellung auf Floats
 %Behebung des Bugs
 %Implementierung in OpenCL
+\section{Grußworte}
+Ich bedanke mich bei meinen Armen dafür, dass sie immer an meiner Seite waren, meinen Beinen, die mich stets gestützt haben und meinen Fingern -- auf euch konnte ich immer zählen.
+\section{Anhang}
+\lstinputlisting[caption=Color Exchange,language=C]{color-exchange.c}
 \end{document}
