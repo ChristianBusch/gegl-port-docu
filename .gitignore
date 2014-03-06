@@ -2,3 +2,8 @@
 *pdf
 *log
 *synctex.gz
+*.bbl
+*.blg
+*.dvi
+*.out
+*~
