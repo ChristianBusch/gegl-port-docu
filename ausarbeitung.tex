@@ -40,7 +40,9 @@ Sascha Denis Knöpfle
 \section*{Zusammenfassung}
 
 \section{Einleitung}
-%Das Anwenden von Filtern auf Bilddaten ist ein beliebter Anwendungsfall für Parallelisierung. Häufig muss ein und die selbe Operation auf jedem Pixel des Ausgabebildes angewandt werden. Nachdem sich Mehrkernprozessoren sowohl in Desktop-PCs als auch in Laptops und sogar günstigen Netbooks und Smart Phones als Standard etabliert haben ist davon auszugehen, dass eine Mehrheit der Nutzer von GEGL mehrere Threads gleichzeitig ausführen können. Hierdurch ergibt sich ein hohes Parallelisierungspotential. Nicht zuletzt sind insbesondere Grafikkarten hervorragend für diese Aufgabe geeignet.
+Das Anwenden von Filtern auf Bilddaten ist ein beliebter Anwendungsfall für Parallelisierung. Häufig muss ein und dieselbe Operation für jeden Pixel des Ausgabebildes angewandt werden. Somit lässt sich relativ einfach ein datenparalleler Algorithmus formulieren. Nachdem sich Mehrkernprozessoren sowohl in Desktop-PCs als auch in Laptops und sogar günstigen Netbooks und Smart Phones als Standard etabliert haben ist davon auszugehen, dass eine Mehrheit der Nutzer von GEGL mehrere Threads gleichzeitig ausführen kann.  Nicht zuletzt sind insbesondere Grafikkarten hervorragend für diese Aufgabe geeignet. Im Zuge der fortschreitenden Marktdurchdringung von OpenCL ist davon auszugehen, dass ebenso die Anzahl der Nutzer, welche von einer Portierung der Algorithmen auf die GPU profitieren würden, wachsen wird. Es ergibt sich also ein hohes Potential durch Parallelisierung die Wartezeit der meisten Nutzer zu verringern.
+
+Die vorliegende Arbeit soll sowohl unsere Vorgehensweise und Erfahrung als auch die Ergebnisse der Portierung und Parallelisierung von vier Filtern von GIMP nach GEGL dokumentieren.
 %Standvorher
 %Zielsetzung
 %Portierung von GIMP nach GEGL
@@ -49,7 +51,7 @@ Sascha Denis Knöpfle
 \section{Filter}
 \subsection{Color Exchange}
 \paragraph{Filter aus Nutzersicht}
-Die Beschreibung des Filters in der GIMP\-/Dokumentation \glqq Dieses Filter ersetzt eine Farbe durch eine andere.\grqq\footnote{\url{http://docs.gimp.org/de/plug-in-exchange.html}} fasst die Grundidee des Filters grob zusammen. Tatsächlich ermöglicht das Filter nicht nur exakt eine Farbe durch eine andere zu ersetzen, sondern auch ähnliche Farben durch eine andere zu ersetzen, wobei in diesem Fall die ersetzende Farbe der jeweiligen Abweichung der im Bild vorhandenen von der zu ersetzenden Farbe angepasst wird.
+\glqq Dieses Filter ersetzt eine Farbe durch eine andere.\grqq\footnote{\url{http://docs.gimp.org/de/plug-in-exchange.html}} -- so steht es in der Dokumentation von GIMP und fasst die Grundidee des Filters grob zusammen. Tatsächlich ermöglicht das Filter jedoch nicht nur exakt eine Farbe durch eine andere zu ersetzen, sondern auch ähnliche Farben durch eine andere zu ersetzen, wobei in diesem Fall die ersetzende Farbe der jeweiligen Abweichung der im Bild vorhandenen von der zu ersetzenden Farbe angepasst wird. Somit können auch Farbverläufe mit einer anderen Farbe versehen werden.
 
 \paragraph{Algorithmus} 
 
@@ -133,7 +135,43 @@ Eine weitere Möglichkeit bestünde darin jeweils die Betrachtung der Farbkanäl
 %Pseudocode, visuell
 \paragraph{Portierung}
 \paragraph{Parallelisierung}
+\subparagraph{OpenMP}
+\subparagraph{OpenCL}
+Dieses Filter wurde im Gegensatz zu den anderen Filtern nicht nur mittels OpenMP sondern auch mittels OpenCL parallelisiert. 
 
+
+
+Durch die Portierung des Algorithmus nach OpenCL fielen die äußeren beiden Schleifen weg, da die Iteration über alle Pixel durch die Abbildung auf die Work Items erfolgte. Die Work Items wurden zweidimensional indiziert und es ist genau ein Work Item für genau einen Pixel zuständig.
+Es wurden wo möglich Vector-Datentypen (float4) verwendet um sowohl Speicherzugriffe zu optimieren als auch um von der Nutzung der Vector-Recheneinheiten zu profitieren.
+
+Durch die Zuordnung eines Pixels zu genau einem Work Item, wobei der Index beider identisch ist, ergibt sich ferner ein Zugriff auf den Globalen Speicher, der Speichertransfers optimiert. Benachbarte Work Items greifen auf benachbarte Speicherstellen zu. Somit kann der Speicherzugriff verschmolzen (coalesced) stattfinden was dazu führt, dass statt mehrerer kleiner Speicherzugriffe deutlich weniger größere erfolgen. Als Folge dessen wird die Speicherbandbreite besser genutzt, wodurch sich wiederum die Laufzeit verringert.
+
+Nach der Implementierung mit jenen Optimierungen wurde die Laufzeit gemessen. Als sich herausstellte dass weitere Optimierungen kaum noch eine Verringerung der Laufzeit herbeiführen würden, da der Kernel bereits zu diesem Zeitpunkt nur noch einen kleinen Bruchteil der Gesamtlaufzeit der GEGL-Operation ausmachte (siehe Ahmdal's Law) wurde von weiteren Optimierungen abgesehen.
+
+Weitere Ansätze zur Optimierung wären gewesen:
+
+Verwendung lokalen Speichers. Durch die Verwendung lokalen Speichers ist es möglich die Speicherzugriffe auf den globalen Speicher zu minimieren. Da letzterer eine um Größenordnungen höhere Latenz hat als lokaler Speicher hätte man so bereits selbst bei nur einer Wiederverwendung der Daten eine insgesamt geringere Laufzeit. Hierbei ist jedoch zu beachten, dass lokaler Speicher nur in einer sehr begrenzten Größe zur Verfügung steht und jeweils nur von der Work Group verwendet werden kann, zu der er gehört. Daraus ergeben sich mehrere Konsequenzen:
+
+Das Bild wird in mehrere Teilbilder zerlegt, deren Anzahl gleich der Zahl der Work Groups ist. Dies stellt zunächst einmal kein Problem dar. Jedoch benötigt dieses Filter für die Berechnung eines Pixels auch Pixel in seiner Umgebung. Mit zunehmender Größe dieser Umgebung, also zunehmendem Radius des Filters, erhöht sich ebenso die Redundanz der vorgehaltenen Pixel.
+
+% Bild einfügen
+
+Dies führt zu mehr Zugriffen auf den globalen Speicher, was somit die Laufzeit erhöht, wenn dies nicht durch Latency Hiding also das "Verschleiern" der Latenz durch die Überbrückung der Wartezeit für Speicherzugriffe durch andere Operationen vermieden werden kann.
+Darüber hinaus wächst aber auch der Speicherverbrauch an lokalem Speicher. Bei großen Radien führt dies dazu, dass weniger Work Units gleichzeitig ausgeführt werden können. Dies wiederum hat einen negativen Einfluss auf das Latency Hiding, da weniger Arbeit für das Überbrücken der Wartezeiten durch Speicherzugriffe vorhanden ist. 
+
+
+% Bild einfügen?
+
+Große Radien können weiterhin dazu führen, dass die zur Berechnung notwendige Umgebung (halo) nicht vollständig in den lokalen Speicher passt. Somit wird ein aufwändigeres Speichermanagement notwendig. Die Größe des Radius ab dem diese Problematik auftritt lässt sich jedoch mit einer weiteren Optimierung zumindest erhöhen.
+
+
+Eine weitere angedachte Optimierung war die Zerlegung des Filters in zwei Filter, die nacheinander aufgerufen werden. Man kann diesen Filter in eine horizontale und eine vertikale Operation zerlegen. Somit benötigt man nur noch die Umgebung in einer Ausrichtung (horizontal oder vertikal) in dem jeweiligen Filter. Dies spart Speicherzugriffe.
+
+% Bild einfügen.
+
+Kombiniert man nun die Zerlegung des Filters in eine horizontalen und einen vertikalen so ergeben sich Synergieeffekte. Es können nun die Halos größerer Radien im lokalen Speicher Platz finden. Erschwerend kommt bei diesem Filter jedoch hinzu, dass man von einem Filter zum nächsten auch die Koeffizienten pro Pixel ebenfalls mitführen müsste -- entweder über einen seperaten Buffer oder aber gemeinsam in einem Buffer zusammen mit den Farbwerten. Ersteres ist hierbei in Hinblick auf das Speicher-Alignment vermutlich vorzuziehen, dies müsste man jedoch empirisch überprüfen.
+
+Ist der Radius des Filters klein, so kann man nun zusätzlich zu den genannten Optimierungen auch noch mehrere Pixel pro Work Unit berechnen. Dies hat den Vorteil, dass sich das Verhältnis von berechneten Pixeln zu Halo-Pixeln zugunsten ersteren verschiebt. Somit verringert sich die Redundanz der im lokalen Speicher vorgehaltenen Pixel weiter und es werden weniger Daten vom globalen Speicher gelesen. Man müsste bei dieser Optimierung allerdings überprüfen wie viel lokalen Speicher man verwenden kann bevor die Laufzeit eventuell wieder steigt, da nicht mehr genug Work Items für Latency Hiding zur Verfügung stehen.
 
 \section{Evaluation der Ergebnisse}
 \subsection{Color Exchange}
