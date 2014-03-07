@@ -1,4 +1,3 @@
-%\documentclass[10pt,a4paper,twocolumn,draft]{article}
 \documentclass[10pt,a4paper]{article}
 \usepackage[utf8]{inputenc}
 \usepackage[ngerman]{babel}
@@ -6,7 +5,6 @@
 \usepackage{amsmath}
 \usepackage{amsfonts}
 \usepackage{amssymb}
-%\usepackage{url}
 
 \usepackage{algorithm}
 \floatname{algorithm}{Algorithmus}
@@ -37,12 +35,11 @@ Sascha Denis Knöpfle
 \title{Portierung und Parallelisierung mehrerer Filter von GIMP nach GEGL}
 \maketitle
 
-\section*{Zusammenfassung}
-
 \section{Einleitung}
-Das Anwenden von Filtern auf Bilddaten ist ein beliebter Anwendungsfall für Parallelisierung. Häufig muss ein und dieselbe Operation für jeden Pixel des Ausgabebildes angewandt werden. Somit lässt sich relativ einfach ein datenparalleler Algorithmus formulieren. Nachdem sich Mehrkernprozessoren sowohl in Desktop-PCs als auch in Laptops und sogar günstigen Netbooks und Smart Phones als Standard etabliert haben ist davon auszugehen, dass eine Mehrheit der Nutzer von GEGL mehrere Threads gleichzeitig ausführen kann.  Nicht zuletzt sind insbesondere Grafikkarten hervorragend für diese Aufgabe geeignet. Im Zuge der fortschreitenden Marktdurchdringung von OpenCL ist davon auszugehen, dass ebenso die Anzahl der Nutzer, welche von einer Portierung der Algorithmen auf die GPU profitieren würden, wachsen wird. Es ergibt sich also ein hohes Potential durch Parallelisierung die Wartezeit der meisten Nutzer zu verringern.
+Das Anwenden von Filtern auf Bilddaten ist ein häufiger Anwendungsfall für Parallelisierung. Hierbei muss oft ein und dieselbe Operation für jeden Pixel des Ausgabebildes angewandt werden. Somit lässt sich relativ einfach ein datenparalleler Algorithmus formulieren. Nachdem sich Mehrkernprozessoren sowohl in Desktop-PCs als auch in Laptops und sogar günstigen Netbooks und Smart Phones als Standard etabliert haben ist davon auszugehen, dass eine Mehrheit der Nutzer von GEGL mehrere Threads gleichzeitig ausführen kann.  Nicht zuletzt sind insbesondere Grafikkarten hervorragend für diese Aufgabe geeignet, wurden sie doch mit Hinblick auf jenes Szenario entwickelt. Im Zuge der fortschreitenden Marktdurchdringung von OpenCL ist davon auszugehen, dass ebenso die Anzahl der Nutzer, welche von einer Portierung der Algorithmen auf die GPU profitieren würden, wachsen wird. Es ergibt sich also ein hohes Potential durch Parallelisierung die Wartezeit der meisten Nutzer zu verringern.
 
-Die vorliegende Arbeit soll sowohl unsere Vorgehensweise und Erfahrung als auch die Ergebnisse der Portierung und Parallelisierung von vier Filtern von GIMP nach GEGL dokumentieren.
+Unsere Gruppe hat vier Filtern von GIMP nach GEGL portiert und parallelisiert. Für die Parallelisierung auf der CPU wurden OpenMP und SSE verwendet, ein Filter wurde zudem mittels OpenCL parallelisiert.
+Die vorliegende Arbeit soll sowohl unsere Vorgehensweise und Erfahrung als auch die Ergebnisse der Portierung und Parallelisierung dokumentieren. 
 %Standvorher
 %Zielsetzung
 %Portierung von GIMP nach GEGL
@@ -51,11 +48,11 @@ Die vorliegende Arbeit soll sowohl unsere Vorgehensweise und Erfahrung als auch 
 \section{Filter}
 \subsection{Color Exchange}
 \paragraph{Filter aus Nutzersicht}
-\glqq Dieses Filter ersetzt eine Farbe durch eine andere.\grqq\footnote{\url{http://docs.gimp.org/de/plug-in-exchange.html}} -- so steht es in der Dokumentation von GIMP und fasst die Grundidee des Filters grob zusammen. Tatsächlich ermöglicht das Filter jedoch nicht nur exakt eine Farbe durch eine andere zu ersetzen, sondern auch ähnliche Farben durch eine andere zu ersetzen, wobei in diesem Fall die ersetzende Farbe der jeweiligen Abweichung der im Bild vorhandenen von der zu ersetzenden Farbe angepasst wird. Somit können auch Farbverläufe mit einer anderen Farbe versehen werden.
+\glqq Dieses Filter ersetzt eine Farbe durch eine andere.\grqq\footnote{\url{http://docs.gimp.org/de/plug-in-exchange.html}} -- so steht es in der Dokumentation von GIMP und fasst die Grundidee des Filters grob zusammen. Tatsächlich ermöglicht das Filter jedoch nicht nur exakt eine Farbe durch eine andere zu ersetzen, sondern auch ähnliche Farben durch eine andere zu ersetzen. Somit können auch ganze Farbverläufe unter Beibehaltung der Abstufung mit einer anderen Farbe versehen werden.
 
 \paragraph{Algorithmus} 
 
-Das Filter prüft für jeden Pixel im Eingabebild jeweils für jeden Farbkanal ob der Farbwert nicht mehr als um den angegebenen Grenzwert von der Auswahlfarbe abweicht. Trifft dies zu wird jeweils der Farbwert addiert mit dem Betrag der Abweichung in das Ausgabebild geschrieben. Ist die Abweichung größer so wird der Wert dieses Farbkanals für jenen Pixel unverändert in das Ausgabebild übertragen. Ebenfalls unverändert bleibt der Alpha-Wert eines jeden Pixels.
+Das Filter prüft für jeden Pixel im Eingabebild jeweils für jeden Farbkanal ob der Farbwert nicht mehr als um den angegebenen Grenzwert von der Auswahlfarbe abweicht. Trifft dies zu wird jeweils der Farbwert addiert mit dem positiven Betrag der Abweichung in das Ausgabebild geschrieben. Ist die Abweichung größer so wird der Wert dieses Farbkanals für jenen Pixel unverändert in das Ausgabebild übertragen. Ebenfalls unverändert bleibt der Alpha-Wert eines jeden Pixels.
 
 \begin{algorithm}[H]
 \caption{Pseudo-Code des \glqq Color Exchange\grqq-Algorithmus}
@@ -106,7 +103,9 @@ Zur Parallelisierung wurde OpenMP verwendet. Hierbei wurde das Eingabebild in St
 \end{algorithmic}
 \end{algorithm}
  
-Eine weitere Möglichkeit bestünde darin jeweils die Betrachtung der Farbkanäle eines Pixels zu Parallelisieren. Diese Idee wurde jedoch als zu kleinschrittig verworfen.
+Eine weitere Möglichkeit bestünde darin jeweils die Betrachtung der Farbkanäle eines Pixels zu Parallelisieren. Diese Idee wurde jedoch als zu kleinschrittig verworfen. Der Koordinierungsaufwand für die Threads dürfte den Zeitgewinn bei der Berechnung mehr als aufwiegen. Denkbar wäre es jedoch diese Parallelisierung mittels Vektoreinheiten der CPU durchzuführen, also beispielsweise SSE zu verwenden.
+
+Weiterhin gestaltet sich eine Parallelisierung mittels OpenCL recht einfach. Hierfür wählt man eine eindimmensionale Organisierung der Work Items und bearbeitet pro Work Item genau einen Pixel. Die äußere Schleife des sequenziellen Algorithmus fällt somit weg. Die oberen und unteren Grenzwerte werden einmal auf der CPU berechnet und der GPU als Konstanten übergeben. Diese Implementierung wäre sehr wahrscheinlich durch die Speicherbandbreite auf der GPU und durch die Bandbreite zwischen Host und GPU limitiert, da sehr wenige Berechnungen auf den Daten ausgeführt werden.
 
 \subsection{Glass Tile}
 \paragraph{Beschreibung des Filters aus Nutzersicht}
