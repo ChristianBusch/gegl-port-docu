@@ -1,0 +1,28 @@
+%% edge-neon.tex
+
+\subsection{Neon}
+\paragraph{Beschreibung des Filters aus Nutzersicht}
+\paragraph{Algorithmus} 
+%Beschreibung Algorithmus allgemeinsprachlich, 
+%Pseudocode, visuell
+\paragraph{Portierung}
+\paragraph{Parallelisierung}
+
+was gemacht wurde111:
+1) Einige unnötige Sprachkonstrukte entfernt
+2) Auch viele Variablen umbenannt
+
+Parallelisierbarkeit:
+Der Algorithmus sieht folgender Weise aus:
+	1) zum Anfang erfolgt waagerechte Suche 
+	2) dann Senkrechte,
+	3) zum Schluss werden beide Ergebnisse gemergt
+	
+Es gab auch ursprünglich keine funktionale Abhängigkeit zwischen den beiden Suchstufen (Schritt 1 und 2), 
+jedoch eine Datenabhängigkeit: Die Ergebnisse ...
+Durch zusätzliche Variablen wurde auch diese Abhängigkeit eliminiert.
+
+Beide Suchstufen erfolgen erfolgen spalten- bzw. zeilenweise und zwar von beiden Seiten simultan,
+so ist in diesem Fall unbeliebte automatische Kachelzerlegung sehr vorteilhaft, da sie Wahrscheinlichkeit dafür erhöht, 
+dass die Werte von links nach rechts immer noch in Cache bleiben, wenn sie von rechts nach links benötigt werden.
+Somit ist 
