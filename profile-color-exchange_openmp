@@ -1,0 +1,45 @@
+#!/bin/bash
+
+echo Running with $1 threads...
+
+# clear contents of profiling file
+echo '' > color-exchange_$1t_raw
+
+export OMP_SCHEDULE=guided,20
+export OMP_NUM_THREADS=$1
+
+echo -ne "Warming cache: 0 runs done.\r"
+# just so runs to warm the cache, we are not interested in the results of this run
+for i in `seq 1 3`;
+do
+	(time GEGL_TILE_SIZE=2000x2000 coding/build/bin/gegl color-exchange.xml -o ~/Pictures/tacker.jpg) 2> /dev/null
+	echo -ne "Warming cache: $i runs done.\r"
+done
+echo -e "\n Done."
+
+
+echo -ne "Profiling run time: 0 runs done.\r"
+
+# do many runs and output results into file
+for i in `seq 1 10`;
+do
+	(time GEGL_TILE_SIZE=2000x2000 coding/build/bin/gegl color-exchange.xml -o ~/Pictures/tacker.jpg) 2>> color-exchange_$1t_raw
+	echo -ne "Profiling run time: $i runs done.\r"
+done
+
+echo -e "\n Done."
+
+
+echo "Parsing run times into csv..."
+echo '' > color-exchange_$1t_times
+
+grep -Po "(?<=(real\s))[^0].*" color-exchange_$1t_raw
+
+if [ $? -ne 1 ]; then
+	echo "Warning: Run time over one minute. The CSV will be broken!"
+fi
+
+grep -Po "(?<=(real\s[0-9]m))[0-9]*\.[0-9]*" color-exchange_$1t_raw > color-exchange_$1t_times
+
+echo " Done."
+# grep -Po "(?<=(Total time:\s))[0-9]*\.[0-9]*s" test_color
