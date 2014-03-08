@@ -55,17 +55,51 @@ Für weitere Details siehe Paragraf ``Parallelisierung''.
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 \paragraph{Portierung}
 \label{neon_portierung}
-1) Einige unnötige Sprachkonstrukte entfernt
-2) Auch viele Variablen umbenannt
+Der ursprüngliche Code konnte zum größten Teil übernommen werden, natürlich nicht ohne Anpassung der Standardkonstrukte und Schnittstellen.
+Auch mehrere unnötige bzw. überflüssige Sprachkonstrukte konnten erkannt und entfernt werden: z.B.  \textcolor{red}{\#radius}.
+
+Des Weiteren wurden im Code viele Variablen umbenannt, was der Qualität und vor allem der Lesbarkeit beitrug, da bevor viele von denen wenigen buchstaben bestanden bzw. aus einer unbekannter Sprache stammen \textcolor{red}{\#k für Head, g für Tail}..
+
+Beachten Sie bitte Hinweise in Paragraf Korrektheit\ref{paragraph:neon_korrektheit}.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 \paragraph{Parallelisierung}
 Es gab auch ursprünglich keine funktionale Abhängigkeit zwischen den beiden Stufen (beide äußere For-Schleifen),  jedoch ließ sich der Algorithmus trotzdem nur bedingt parallelisieren. Grund dafür war eine Datenabhängigkeit: In der \ref{neon_datenabhaengigkeit}. Zeile des Algorithmus \ref{algo:neon} werden Ergebnisse der beiden Schritte zusammengeführt. Im sequenziellen Fall hätte es einen guten Grund - bessere Cacheausnutzung - ein der beiden benötigten Felder ist garantiert im Cache (so weit Cache ausreicht) vorhanden.
 
 Wird der Algorithmus parallel ausgeführt, so sollte diese Datenabhängigkeit z.B. durch temporäre Variablen eliminiert werden. 
 
-\newpage
+
 \subparagraph{Ansätze zur Parallelisierung}
 \begin{enumerate}
 	\item [] \begin{description} %Platzhalter links
@@ -84,6 +118,8 @@ Wird der Algorithmus parallel ausgeführt, so sollte diese Datenabhängigkeit z.
 
 Da GEGL-eigene Methoden zum Lesen und vor allem Schreiben in Ausgabebild als not-thread-safe betrachtet werden und stark gewünscht sind, müssen sie in einem kritischen Bereich geschützt werden.
 Der einzige Kritikpunkt an Algorithmus \ref{algo:neon_conservative} besteht darin, dass der kritische Bereich sich in der parallelen Region befindet, was hier zum Flaschenhals resultieren wird - mit zunehmender Threadzahl wird die Effizienz schnell fallen.
+
+Beide Ansätze sind mithilfe von OpenMP realisiert.
 
 
 
