@@ -1,4 +1,5 @@
 %% edge-neon.tex
+\newpage
 \subsection{Neon}
 
 \paragraph{Beschreibung des Filters aus Nutzersicht}
@@ -60,16 +61,104 @@ Für weitere Details siehe Paragraph ``Parallelisierung''.
 2) Auch viele Variablen umbenannt
 
 \paragraph{Parallelisierung}
-Es gab auch ursprünglich keine funktionale Abhängigkeit zwischen den beiden Stufen (Schritt 1 und 2),  jedoch ließ sich der Algorithmus trotzdem nur bedingt parallelisieren. Grund dafür war eine Datenabhängigkeit: In der \ref{neon_datenabhaengigkeit}. Zeile des Algorithmus \ref{algo:neon} werden Ergebnisse beider Schritte zusammengeführt. Im sequenziellen Fall hätte es einen guten Grund - bessere Cacheausnutzung - ein der beiden benötigten Felder ist garantiert im Cache (so weit Cache reicht) vorhanden.
+Es gab auch ursprünglich keine funktionale Abhängigkeit zwischen den beiden Stufen (beide äußere For-Schleifen),  jedoch ließ sich der Algorithmus trotzdem nur bedingt parallelisiren. Grund dafür war eine Datenabhängigkeit: In der \ref{neon_datenabhaengigkeit}. Zeile des Algorithmus \ref{algo:neon} werden Ergebnisse der beiden Schritte zusammengeführt. Im sequenziellen Fall hätte es einen guten Grund - bessere Cacheausnutzung - ein der beiden benötigten Felder ist garantiert im Cache (so weit Cache ausreicht) vorhanden.
 
-===================================================
-Wird der Algorithmus parallel ausgeführt, so muss diese Datenabhängigkeit z.B. durch zusätzliche temporäre Variablen eliminiert werden. 
+Wird der Algorithmus parallel ausgeführt, so sollte diese Datenabhängigkeit z.B. durch temporäre Variablen eliminiert werden. 
 
-===================================================
-Ursprünglich verfolgten wir den SECTIONS-Ansatz, aber schlechtere Cacheausnutzung. Aus diesem testen wir auch den anderen Ansatz: 1. Schleife ``parallel for'', anschließend (mit impliziter Barriere) die 2. Schleife ``parallel for''.
+Ansätze zur Parallelisierung:
+\begin{enumerate}
+	\item [] \begin{description} %Platzhalter links
+		\item[1) Sections] Der ursprünglich verflogte Ansatz. Beide äußere Schleifen werden durch ``\#pragma omp sections'' simultan abgearbeitet. Des Weiteren kann auch jede der Schleifen intern parallelisiert werden. Datenabhängigkeit muss eliminiert werden. Siehe Algorithmus \ref{algo:neon_sections}.
+		
+		Vorteil: weniger Datenabhängigkeiten, kritischer Abschnitt ist ausserhalb der parallelen Region
+		
+		Nachteil: schlechtere Cache-Ausnutzung
+		\item[2) Konservative Schleifenparallelisierung] Unter Annahme dass die gegebene Datenabhängigkeit zwecks der besseren Cache-Ausnutzung beibehalten werden soll, muss die erste For-Schleife vollständig abgearbeitet sein, befor es mit der Zweiten angefangen werden kann (implizite Barriere kann hier gute Dienste leisten). Siehe Algorithmus \ref{algo:neon_conservative}
+		
+		Vorteil: weniger Eingriffe in den Code, bessere Cache-Ausnutzung
+		
+		Nachteil: kritischer Abschnitt innerhalb der parallelen Region 
+	\end{description}
+\end{enumerate}
+
+
+\newpage
+%PARALLELISIERUNG MIT SECTIONS
+\begin{algorithm}[H]
+\caption{Pseudo-Code des \glqq Neon\grqq-Algorithmus: Sections}
+\label{algo:neon_sections}
+\begin{algorithmic}[1]
+\State \textcolor{blue}{\#pragma omp parallel sections}
+\State \textcolor{blue}{\#pragma omp section}
+\ForAll{$columns \in input$}
+	\State lese eine Spalte aus dem Eingabebild
+	\ForAll{$pixel \in column$}
+		\State berechne neon von oben nach unten
+	\EndFor
+	\ForAll{$pixel \in column$}
+		\State berechne neon von unten nach oben
+	\EndFor
+	\State merge Ergebnisse in eine Spalte
+	\State speichere in Ausgabebild
+\EndFor	
+\State \textcolor{blue}{\#pragma omp section}
+\ForAll{$rows \in input$}
+	\State lese eine Zeile aus dem Eingabebild
+	\ForAll{$pixel \in row$}
+		\State berechne neon von links nach rechts
+	\EndFor
+	\ForAll{$pixel \in row$}
+		\State berechne neon von rechts nach links
+	\EndFor	
+	\State merge Ergebnisse in eine Zeile
+	\State bilde Gradient von dieser Zeile und einer aus dem Ausgabebild
+	\State speichere in Ausgabebild
+\EndFor
+\end{algorithmic}
+\end{algorithm}
+
+%KONSERVATIVE PARALLELISIERUNG
+\begin{algorithm}[H]
+\caption{Pseudo-Code des \glqq Neon\grqq-Algorithmus: Konservative Schleifenparallelisierung}
+\label{algo:neon_conservative}
+\begin{algorithmic}[1]
+\State \textcolor{blue}{\#pragma omp parallel for }
+\ForAll{$columns \in input$}
+	\State lese eine Spalte aus dem Eingabebild
+	\ForAll{$pixel \in column$}
+		\State berechne neon von oben nach unten
+	\EndFor
+	\ForAll{$pixel \in column$}
+		\State berechne neon von unten nach oben
+	\EndFor
+	\State merge Ergebnisse in eine Spalte
+	\State speichere in \textcolor{blue}{temporäres Feld1}
+\EndFor	
+\State \textcolor{blue}{\#pragma omp parallel for }
+\ForAll{$rows \in input$}
+	\State lese eine Zeile aus dem Eingabebild
+	\ForAll{$pixel \in row$}
+		\State berechne neon von links nach rechts
+	\EndFor
+	\ForAll{$pixel \in row$}
+		\State berechne neon von rechts nach links
+	\EndFor	
+	\State merge Ergebnisse in eine Zeile
+	\State speichere in \textcolor{blue}{temporäres Feld2}
+\EndFor
+\ForAll{$pixel \in Ausgabebild$}
+	\State \label{neon_keine_datenabhaengigkeit} lese je ein Pixel aus Feld1 und Feld2,  speichere Gradient in Ausgabebild
+\EndFor
+\end{algorithmic}
+\end{algorithm}
+
+
 
 ===================================================
 Kritischer Bereich (lese und schreibe in Ausgabebild) wird hier zum Flaschenhals, so mit zunehmender Threadzahl darf die Effizienz schnell fallen.
+===================================================
+
+Da GEGL-eigene Methoden als nicht thread-safe betrachtet werden
 ===================================================
 
 
