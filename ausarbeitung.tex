@@ -85,8 +85,9 @@ Zur Parallelisierung wurde OpenMP verwendet. Hierbei wurde das Eingabebild in St
 \caption{Pseudo-Code des \glqq Color Exchange\grqq-Algorithmus}
 \label{algo:exchange_par}
 \begin{algorithmic}[1]
+\State split $input$ in $numThreads$ parts
 \ForAll{$thread \in \{0, \ldots, numThreads - 1\}$}
-  %INSERT SOMETHING MEANINGFUL
+  
   \ForAll{$pixel \in input$}
     \ForAll{$color \in \{red, green, blue\}$}
       \State $\delta_{color} \gets \abs{ pixel_{color} - from_{color}}$    
