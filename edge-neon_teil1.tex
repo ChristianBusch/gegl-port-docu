@@ -65,7 +65,8 @@ Es gab auch ursprünglich keine funktionale Abhängigkeit zwischen den beiden St
 
 Wird der Algorithmus parallel ausgeführt, so sollte diese Datenabhängigkeit z.B. durch temporäre Variablen eliminiert werden. 
 
-Ansätze zur Parallelisierung:
+\newpage
+\subparagraph{Ansätze zur Parallelisierung}
 \begin{enumerate}
 	\item [] \begin{description} %Platzhalter links
 		\item[1) Sections] Der ursprünglich verfolgte Ansatz. Beide äußere Schleifen werden durch ``\#pragma omp sections'' simultan abgearbeitet. Des Weiteren kann auch jede der Schleifen intern parallelisiert werden. Datenabhängigkeit muss eliminiert werden. Siehe Algorithmus \ref{algo:neon_sections}.
