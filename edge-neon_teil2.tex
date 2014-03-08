@@ -1,9 +1,15 @@
 %% edge-neon_teil2.tex
 \subsection{Neon}
 \paragraph{Korrektheit}
+\label{paragraph:neon_korrektheit}
 %Bild Eingabe (Duck / matting-global / car-stack?)
 %Vergleich Ausgabe bei Eingabe mit gleichen Parametern GIMP – GEGL Bilder
 %Ergebnis vom Diff
+Trotz sehr aufwändiger Suche und Behandlung, auch mehrfachen Neuanfang konnten wir einen Fehler bei der Kachelzerlegung nicht fixen.  
+Unerwarteter Weise werden horizontale Kachelränder etwas verzärrt.
+Anscheinend behandeln diesen Punkt GEGL und GIMP nicht gleichermaßen.
+
+Wird das Bild nur in senkrechte oder keine Kacheln zerlegt, so stimmen die AUsgaben von GEGL und GIMP überein.
 \paragraph{Laufzeit}
 %X Durchläufe in Diagram abtragen?
 %System beschreiben (Hardware, Software, Umgebungsvariablen) !!!
