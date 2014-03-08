@@ -24,7 +24,7 @@ echo -ne "Profiling run time: 0 runs done.\r"
 # do many runs and output results into file
 for i in `seq 1 50`;
 do
-	/usr/bin/time -t "%e" -o color-exchange_$1t_times coding/build/bin/gegl color-exchange.xml -o ~/Pictures/tacker.jpg
+	/usr/bin/time -f "%e" -o color-exchange_$1t_times --append coding/build/bin/gegl color-exchange.xml -o ~/Pictures/tacker.jpg
 	echo -ne "Profiling run time: $i runs done.\r"
 done
 
