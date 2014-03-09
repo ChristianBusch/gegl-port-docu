@@ -1,0 +1,50 @@
+%% selective-gaussian-blur-body.tex
+\paragraph{Beschreibung des Filters aus Nutzersicht}
+\glqq Im Gegensatz zu den anderen Weichzeichnungsfiltern wirkt der Selektive Gaußsche Weichzeichner nicht auf alle Pixel des Bildes, der Auswahl oder der aktuellen Ebene. Das Filter wirkt nur auf die Pixel, deren Farbe höchstens um einen definierten Wert von der Farbe der Nachbarpixel abweicht. Daher werden Kanten im Bild erhalten.\glqq\footnote{\url{http://docs.gimp.org/	de/plug-in-sel-gauss.html}} 
+
+Das Filter hat zwei Parameter: 
+\begin{itemize}
+\item Blur Radius - beeinflusst maßgeblich die Intensität der Wirkung. Der Radius wird in Pixeln angegeben.
+\item Max. Delta - stellt die maximale Farbdifferenz im Bereich von 0 bis 255 pro Farbkanal dar. Dieser Wert beeinflusst maßgeblich, wie gut Kanten
+gegen das Weichzeichnen geschützt werden.
+\end{itemize}
+
+
+\paragraph{Algorithmus} 
+\begin{algorithm}[h]
+\caption{Pseudo-Code des \glqq Selective Gaussian Blur\grqq-Algorithmus}
+\label{algo:gtile}
+\begin{algorithmic}[1]
+
+\ForAll{$rows$ $\in input$}
+	\ForAll{$columns$ $\in input$}
+	\ForAll{$color$ $channels$}
+		\State $col\_sum \gets 0$
+		\ForAll{$y \in blur\_area$}
+			\If{$y$ $\not \in input$}
+			\State continue
+			\EndIf
+			\State $row\_sum \gets 0$
+			\ForAll{$x \in blur\_area$}
+				\If{$x$ $\not \in input$}
+				\State{continue}
+				\EndIf
+				\State{$diff \gets src\_value - area\_value$}
+				\If{$diff < delta$}
+				\State{continue}
+				\EndIf
+				\State{$row\_sum \gets coeff * area\_value$}
+			\EndFor
+			\State{$col\_sum \gets coeff * row\_sum$}
+		\EndFor
+		\State $dst\_value \gets col\_sum$
+	\EndFor
+	\EndFor
+\EndFor	
+\end{algorithmic}
+\end{algorithm}
+%Beschreibung Algorithmus allgemeinsprachlich, 
+%Pseudocode, visuell
+\paragraph{Portierung}
+\paragraph{Parallelisierung}
+\subparagraph{OpenMP}
