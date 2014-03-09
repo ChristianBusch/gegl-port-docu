@@ -4,8 +4,8 @@
 
 Das Filter hat zwei Parameter: 
 \begin{itemize}
-\item Blur Radius - beeinflusst maßgeblich die Intensität der Wirkung. Der Radius wird in Pixeln angegeben.
-\item Max. Delta - stellt die maximale Farbdifferenz im Bereich von 0 bis 255 pro Farbkanal dar. Dieser Wert beeinflusst maßgeblich, wie gut Kanten
+\item \emph{Blur Radius} - beeinflusst maßgeblich die Intensität der Wirkung. Der Radius wird in Pixeln angegeben.
+\item \emph{Max. Delta} - stellt die maximale Farbdifferenz im Bereich von 0 bis 255 pro Farbkanal dar. Dieser Wert beeinflusst maßgeblich, wie gut Kanten
 gegen das Weichzeichnen geschützt werden.
 \end{itemize}
 
@@ -13,7 +13,7 @@ gegen das Weichzeichnen geschützt werden.
 \paragraph{Algorithmus} 
 \begin{algorithm}[h]
 \caption{Pseudo-Code des \glqq Selective Gaussian Blur\grqq-Algorithmus}
-\label{algo:gtile}
+\label{algo:sgb}
 \begin{algorithmic}[1]
 
 \ForAll{$rows$ $\in input$}
@@ -43,6 +43,18 @@ gegen das Weichzeichnen geschützt werden.
 \EndFor	
 \end{algorithmic}
 \end{algorithm}
+
+Der Algorithmus funktioniert pixelweise. Jeder Ausgangspixel wird separat bearbeitet, für jeden Pixel werden Werte für Farbkanäle einzeln berechnet. Bei der Berechnung werden benachbarte Pixelwerte mit einer Faltungsmatrix multipliziert, was in Abbildung \ref{fig:sgb-grid} dargestellt ist. Die Faltungsmatrix ist 2 * \emph{Radius} groß. Bei der Multiplikation wird jedes benachbarte Pixel mit dem zentralen Eingangspixel verglichen, und wenn die Farbdifferenz kleiner als \emph{Max. Delta} ist, trägt dieses Pixel zum Endergebnis bei. 
+
+Der Quellcode hat zwei äußere Schleife, die über die Zeilen und Spalten iterieren. Dann wird pro Farbkanal den Pixelwert berechnet, wo man die Eingangswerte mit den Filterkernwerten multipliziert. Die Multiplikation selbst hat auch zwei Schleifen, die über den Filterkern iterieren.   
+
+
+\begin{figure}
+\centering
+\includegraphics[scale=0.9]{sgb-grid.pdf}
+\caption{Selective Gaussian Blur. Schematische Darstellung}
+\label{fig:sgb-grid}
+\end{figure} 
 %Beschreibung Algorithmus allgemeinsprachlich, 
 %Pseudocode, visuell
 \paragraph{Portierung}
