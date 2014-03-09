@@ -105,14 +105,31 @@ Wird der Algorithmus parallel ausgeführt, so sollte diese Datenabhängigkeit z.
 	\item [] \begin{description} %Platzhalter links
 		\item[1) Sections] Der ursprünglich verfolgte Ansatz. Beide äußere Schleifen werden durch ``\#pragma omp sections'' simultan abgearbeitet. Des Weiteren kann auch jede der Schleifen intern parallelisiert werden. Datenabhängigkeit muss eliminiert werden. Siehe Algorithmus \ref{algo:neon_sections}.
 		
-		Vorteil: weniger Datenabhängigkeiten, kritischer Abschnitt ist außerhalb der parallelen Region
+		Vorteile:
+		\begin{itemize}
+		\item[\texttt{+}] weniger Datenabhängigkeiten
+		\item[\texttt{+}] kritischer Abschnitt ist außerhalb der parallelen Region
+		\end{itemize}
 		
-		Nachteil: schlechtere Cache-Ausnutzung
+		Nachteile:
+		\begin{itemize}
+		\item[\texttt{-}] schlechtere Cache-Ausnutzung
+		\item[\texttt{-}] höherer Speicherbedarf (zusätzlicher GeglBuffer nötig)
+		\end{itemize}
+		
+
 		\item[2) Konservative Schleifenparallelisierung] Unter Annahme, dass die vorhandene Datenabhängigkeit zwecks der besseren Cache-Ausnutzung beibehalten werden soll, muss die erste For-Schleife vollständig abgearbeitet sein, bevor es mit der Zweiten angefangen werden kann (implizite Barriere kann hier gute Dienste leisten). Siehe Algorithmus \ref{algo:neon_conservative}
+
+		Vorteile:
+		\begin{itemize}
+		\item[\texttt{+}] bessere Cache-Ausnutzung
+		\item[\texttt{+}] weniger Eingriffe in den Code
+		\end{itemize}
 		
-		Vorteil: weniger Eingriffe in den Code, bessere Cache-Ausnutzung
-		
-		Nachteil: kritischer Abschnitt innerhalb der parallelen Region 
+		Nachteile:
+		\begin{itemize}
+		\item[\texttt{-}] kritischer Abschnitt innerhalb der parallelen Region 
+		\end{itemize}
 	\end{description}
 \end{enumerate}
 
@@ -157,12 +174,11 @@ Beide Ansätze sind mithilfe von OpenMP realisiert.
 		\State merge Ergebnisse in eine Zeile
 	\State speichere in \textcolor{blue}{temporäres Feld2}
 \EndFor
+\State \}
+\State \textcolor{blue}{\#pragma omp parallel for }
 \ForAll{$pixel \in Ausgabebild$}
 	\State \label{neon_keine_datenabhaengigkeit} lese je ein Pixel aus Feld1 und Feld2,  speichere Gradient in Ausgabebild
 \EndFor
-
-
-\State \}
 \end{algorithmic}
 \end{algorithm}
 
