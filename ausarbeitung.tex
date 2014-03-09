@@ -6,6 +6,7 @@
 \usepackage{amsfonts}
 \usepackage{amssymb}
 \usepackage{graphicx}
+\usepackage{booktabs}
 
 \usepackage{algorithm}
 \floatname{algorithm}{Algorithmus}
@@ -60,23 +61,26 @@ Das Filter prüft für jeden Pixel im Eingabebild jeweils für jeden Farbkanal o
 \caption{Pseudo-Code des \glqq Color Exchange\grqq-Algorithmus}
 \label{algo:exchange}
 \begin{algorithmic}[1]
+\State $color \in \{red, green, blue\}$
 \ForAll{$pixel \in input$}
-  \ForAll{$color \in \{red, green, blue\}$}
-    \State $\delta_{color} \gets \abs{ pixel_{color} - from_{color}}$    
-    \If{$\delta_{color} \leq threshold_{color}$}  
+  \State $\delta_{color} \gets \abs{ pixel_{color} - from_{color}}$    
+  \If{$\forall color: \delta_{color} \leq threshold_{color}$}
+    \ForAll{$color$}  
       \State $outputPixel_{color} \gets from_{color} + \delta_{color}$
-    \Else
+    \EndFor
+  \Else
+    \ForAll{$color$}
       \State $outputPixel_{color} \gets pixel_{color}$
-    \EndIf
-  \EndFor
+    \EndFor
+  \EndIf
   \State $outputPixel_{alpha} \gets pixel_{alpha}$
-  \State write $outputPixel$ into $output$ at $pixel$'s index 
+  \State schreibe $outputPixel$ in das Ausgabebild
 \EndFor
 \end{algorithmic}
 \end{algorithm}
 
 \paragraph{Portierung}
-Bei der Portierung wurde vorerst die Farbrepräsentation in RGBA mit 8 Bit je Farbkanal beibehalten. Ferner enthält die Implementierung innerhalb von GIMP bereits einen Fehler. Dieser wurde bei der Portierung zunächst übernommen um einen Vergleich zwischen portierter und der ursprünglichen Variante dieses Filters ziehen zu können. Die fragliche Code-Stelle findet sich in Zeile 5 von \autoref{algo:exchange}. Durch die Verwendung des Betrages der Differenz an jener Stelle führen insbesondere hohe Schwellwerte zu unerwünschten Artefakten. Der Fehler wurde bereits den GEGL-Entwicklern mitgeteilt und wird von uns zu einem späteren Zeitpunkt korrigiert.
+Bei der Portierung wurde vorerst die Farbrepräsentation in RGBA mit 8 Bit je Farbkanal beibehalten. Ferner enthält die Implementierung innerhalb von GIMP bereits einen Fehler. Dieser wurde bei der Portierung zunächst übernommen um einen Vergleich zwischen portierter und der ursprünglichen Variante dieses Filters ziehen zu können. Die fragliche Code-Stelle findet sich in Zeile 6 von \autoref{algo:exchange}. Durch die Verwendung des Betrages der Differenz an jener Stelle führen insbesondere hohe Schwellwerte zu unerwünschten Artefakten. Der Fehler wurde bereits den GEGL-Entwicklern mitgeteilt und wird von uns zu einem späteren Zeitpunkt korrigiert.
 
 \paragraph{Parallelisierung}
 Bei diesem Filter handelt es sich um einen sogenannten Punktfilter, was bedeutet, dass ein Ausgabepixel von genau einem Eingabepixel abhängt. Somit ist keine Koordination zwischen den einzelnen Threads notwendig. Dies ist ein glücklicher Umstand für die Parallalisierung, da diese besonders einfach ausfällt. So einfach, dass diese Klasse von Problemen in der Fachsprache \glqq embarassingly parallel\grqq also etwa \glqq peinlich parallel\grqq genannt wird.
@@ -84,24 +88,27 @@ Bei diesem Filter handelt es sich um einen sogenannten Punktfilter, was bedeutet
 Zur Parallelisierung wurde OpenMP verwendet. Hierbei wurde das Eingabebild in Streifen auf die jeweiligen Threads aufgeteilt. Ein Thread berechnet somit jeweils einen oder mehrere Streifen aus beieinander liegenden Pixeln.
 
 \begin{algorithm}[H]
-\caption{Pseudo-Code des \glqq Color Exchange\grqq-Algorithmus}
+\caption{Pseudo-Code des \glqq Color Exchange\grqq-Algorithmus in OpenMP}
 \label{algo:exchange_par}
 \begin{algorithmic}[1]
-\State split $input$ in $numThreads$ parts
-\ForAll{$thread \in \{0, \ldots, numThreads - 1\}$}
-  
-  \ForAll{$pixel \in input$}
-    \ForAll{$color \in \{red, green, blue\}$}
-      \State $\delta_{color} \gets \abs{ pixel_{color} - from_{color}}$    
-      \If{$\delta_{color} \leq threshold_{color}$}  
-        \State $outputPixel_{color} \gets from_{color} + \delta_{color}$
-      \Else
-        \State $outputPixel_{color} \gets pixel_{color}$
-      \EndIf
+\State $color \in \{red, green, blue\}$
+\State zerlege Bild in numThreads Teilbereiche
+\State weise jedem Thread seinen Teilbereich $threadInput$ zu
+\ForAll{$thread \in {1..numThreads}$}
+\ForAll{$pixel \in threadInput$}
+  \State $\delta_{color} \gets \abs{ pixel_{color} - from_{color}}$    
+  \If{$\forall color: \delta_{color} \leq threshold_{color}$}
+    \ForAll{$color$}  
+      \State $outputPixel_{color} \gets from_{color} + \delta_{color}$
     \EndFor
-    \State $outputPixel_{alpha} \gets pixel_{alpha}$
-    \State write $outputPixel$ into $output$ at $pixel$'s index 
-  \EndFor
+  \Else
+    \ForAll{$color$}
+      \State $outputPixel_{color} \gets pixel_{color}$
+    \EndFor
+  \EndIf
+  \State $outputPixel_{alpha} \gets pixel_{alpha}$
+  \State schreibe $outputPixel$ in das Ausgabebild
+\EndFor
 \EndFor
 \end{algorithmic}
 \end{algorithm}
@@ -186,22 +193,37 @@ Große Radien können weiterhin dazu führen, dass die zur Berechnung notwendige
 %Vergleich Ausgabe bei Eingabe mit gleichen Parametern GIMP – GEGL Bilder
 %Ergebnis vom Diff
 \paragraph{Laufzeit}
-Verwendet man 2 OpenMP-Threads, so wird der Code minimal schneller ausgeführt, wie in \autoref{fig:CE_2} zu sehen ist.
+Verwendet man 2 OpenMP-Threads, so wird der Code minimal schneller ausgeführt\footnote{Zur Ermittlung der Laufzeit wurde der Code jeweils 50 mal ausgeführt und die Laufzeit erfasst. Das Testsystem hierfür war ein Ubuntu 13.12 auf einem Q9550 mit 8 GB RAM. Auf die Verwendung des Institusrechners für Benchmarking wurde verzichtet.}, wie in \autoref{fig:CE_2} zu sehen ist. Dieser kaum merkliche Geschwindigkeitszuwachs rechtfertigt die gestiegene Code-Komplexität jedoch in keiner Weise.
 
-\begin{figure}[H]
+\begin{figure}[hb]
 \centering
 \includegraphics[scale=0.7]{diag_2threads.pdf}
 \caption{Laufzeit von Color Exchange mit einem und zwei OpenMP-Threads}
 \label{fig:CE_2}
 \end{figure}
-Entgegen unseren Erwartungen wird dieses Filter mit zunehmender Anzahl an Threads jedoch langsamer statt schneller. Insbesondere bei der Ausführung mit 4 Threads wird dieses Verhalten besonders deutlich.
+Entgegen unseren Erwartungen wird dieses Filter mit zunehmender Anzahl an Threads langsamer statt schneller. Insbesondere bei der Ausführung mit 4 Threads wird dieses Verhalten besonders deutlich.(siehe \autoref{algo:exchange_par}) Somit muss die Verwendbarkeit dieser Parallelisierungsstrategie für die praktische Nutzung entschieden verneint werden.
 
-\begin{figure}[H]
+\begin{figure}[hb]
 \centering
 \includegraphics[scale=0.7]{diag.pdf}
 \caption{Laufzeit von Color Exchange mit einem bis vier OpenMP-Threads}
 \end{figure}
-Test
+
+\begin{table}[H]
+\centering
+\begin{tabular}{lrrrrr}
+\toprule
+ & & \multicolumn{4}{c}{OpenMP-Threads} \\
+\cmidrule(r){3-6}
+ & seq & 1 & 2 & 3 & 4 \\
+oberes Quartil 	& 0 		& 3.39 		& 3.3720 		& 7.178 		& 53.18 \\
+Median 			& 0 		& 3.39 		& 3.3785 		& 8.360 		& 54.888 \\
+unteres Quartil 	& 0 		& 3.40 		& 3.3910 		& 8.973 		& 55.978 \\
+\bottomrule
+\end{tabular}
+\caption{Laufzeit von Color Exchange in verschiedenen Konfigurationen}
+\label{tab:CE_runtime}
+\end{table}
 %X Durchläufe in Diagram abtragen?
 %System beschreiben (Hardware, Software, Umgebungsvariablen) !!!
 %Boxplots !!!
@@ -250,7 +272,9 @@ Test
 %Aus Debug-Output Diagramm erstellen um Anteil des Filters an Gesamtlaufzeit zu verdeutlichen
 %Warum wird es mit OpenMP langsamer?
 \section{Abschließende Betrachtung}
-Einen unerwartet großen Anteil an der
+Einen unerwartet großen Anteil an der aufgewandten Zeit hat die Portierung in Anspruch genommen. Insbesondere das Verständnis für die Funktionsweise von GEGL hat sich erst nach tiefgründiger Beschäftigung eingestellt. Waren dann GEGL und der zu portierende Algorithmus erst einmal verstanden lief die Portierung relativ flüssig ab. Das Tiling durch GEGL hat jedoch hin und wieder für längere Denkpausen gesorgt.
+Positiv ist anzumerken, dass die Quellcode-Dateien infolge der Portierung nach GEGL deutlich übersichtlicher geworden sind, da der ganze Boiler Plate-Code, wie z.B. GUI-Erstellung und Aktualisierung, wegfällt.
+Die Parallelisierung mittels OpenMP ist sicherlich nicht die optimale Lösung für GEGL-Filter, da das Tiling eigentlich ebenfalls als Parallelisierungsmechanismus vorgesehen ist. Nichtsdestotrotz 
 
 \section{Ausblick}
 %Umstellung auf Floats
