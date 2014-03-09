@@ -14,6 +14,7 @@
 \usepackage[shortcuts]{extdash}	% trenne auch Worte, die einen Bindestrich enthalten
 \providecommand{\abs}[1]{\lvert#1\rvert}
 \providecommand{\norm}[1]{\lVert#1\rVert}
+\usepackage{graphicx}
 \usepackage{hyperref}
 \usepackage{color}
 \newcommand{\algorithmautorefname}{Algorithmus}
@@ -108,23 +109,9 @@ Eine weitere Möglichkeit bestünde darin jeweils die Betrachtung der Farbkanäl
 
 Weiterhin gestaltet sich eine Parallelisierung mittels OpenCL recht einfach. Hierfür wählt man eine eindimmensionale Organisierung der Work Items und bearbeitet pro Work Item genau einen Pixel. Die äußere Schleife des sequenziellen Algorithmus fällt somit weg. Die oberen und unteren Grenzwerte werden einmal auf der CPU berechnet und der GPU als Konstanten übergeben. Diese Implementierung wäre sehr wahrscheinlich durch die Speicherbandbreite auf der GPU und durch die Bandbreite zwischen Host und GPU limitiert, da sehr wenige Berechnungen auf den Daten ausgeführt werden.
 
-\subsection{Glass Tile}
-\paragraph{Filter aus Nutzersicht}
 
 
-\paragraph{Algorithmus} 
-
-%Beschreibung Algorithmus allgemeinsprachlich, 
-%Pseudocode, visuell
-\paragraph{Portierung}
-\paragraph{Parallelisierung}
-
-
-
-
-
-
-
+\input{gtile_part.tex}
 
 
 
@@ -194,17 +181,18 @@ Ist der Radius des Filters klein, so kann man nun zusätzlich zu den genannten O
 %Boxplots !!!
 %Statistische Analyse ?!
 %Aus Debug-Output Diagramm erstellen um Anteil des Filters an Gesamtlaufzeit zu verdeutlichen
-\subsection{Glass Tile}
-\paragraph{Korrektheit}
+%\subsection{Glass Tile}
+%\paragraph{Korrektheit}
 %Bild Eingabe (Duck / matting-global / car-stack?)
 %Vergleich Ausgabe bei Eingabe mit gleichen Parametern GIMP – GEGL Bilder
 %Ergebnis vom Diff
-\paragraph{Laufzeit}
+%\paragraph{Laufzeit}
 %X Durchläufe in Diagram abtragen?
 %System beschreiben (Hardware, Software, Umgebungsvariablen) !!!
 %Boxplots !!!
 %Statistische Analyse ?!
 %Aus Debug-Output Diagramm erstellen um Anteil des Filters an Gesamtlaufzeit zu verdeutlichen
+\input{gtile_eval.tex}
 
 
 %\subsection{Neon}
