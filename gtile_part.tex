@@ -62,7 +62,8 @@ Diese gelesenen und verschobenen Zeilen werden anschließend in der zweiten Häl
 Die Verrückung und Wiederholung der Spalten erfolgt analog. Auf diese Weise wird Kachel für Kachel bearbeitet. Der sequentielle original Algorithmus liest dabei komplette Zeilen ein und führt darauf die notwendigen Spaltenverschiebungen durch.
 
 \paragraph{Portierung}
-Bei der Portierung wurde etwas getan.
+Die Portierung basiert auf einem Area Filter. Wegen des speziellen Gegl-Frameworks, das Kacheln arbitrarer Größe zur Bearbeitung liefert, war es notwendig die Initialisierung der für den Algorithmen relevanten Variablen anzupassen, insbesondere \emph{ymiddle}, \emph{yoffs}, \emph{xmiddle} und \emph{xoffs}, da es möglich ist, dass die linke obere Ecke des zu bearbeitenden Gegl-Tiles nicht kongruent mit dem fortlaufenden Glass-Tile ist, und die Operation irgendwo zufällig in der Mitte einer Glass-Tile beginnen kann.
 
 \paragraph{Parallelisierung}
-Peinlich peinlich möchte man denken.
+Da alle Pixel theoretisch unabhängig voneinander und in beliebiger Reihenfolge betrachtet und bearbeitet werden können, von der Indizierung für die korrekte Verschiebung abgesehen, wäre eine logische Schlussfolgerung, dass der Algorithmus trivial parallelisierbar ist. Jedoch hat sich erst nach einer Testimplementierung gezeigt, dass die einzelnen Kopiervorgänge zwar unabhängig voneinander sind, jedoch Memory-Effekte wie z.B. Cache-Ausnutzung jeglichen Speedup wieder zunichte machen. Dies lässt sich darauf begründen, dass der Berechnungsaufwand pro Pixel gesehen werden kann und vernachlässigbar ist, da weder Bedingungen geprüft werden, noch kostenintensive Rechenoperationen durchgeführt werden, und somit lediglich ein Kopiervorgang stattfindet. Somit lohnt sich eine generisch implementierte Parallelisierung nicht, und es bleibt Gegenstand zur Untersuchung, ob durch eine hardwarespezifische Implementierung ein Speedup erreicht werden kann.\newline
+Dennoch wurde eine Parallelisierung mittels OpenMP realisiert, bei der die zu bearbeitenden Zeilen gleichmäßig auf die vorhandenen Threads aufgeteilt werden.
