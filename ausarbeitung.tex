@@ -121,78 +121,19 @@ Weiterhin gestaltet sich eine Parallelisierung mittels OpenCL recht einfach. Hie
 
 
 
-\subsection{Neon}
-\paragraph{Filter aus Nutzersicht}
-Dieses Filter extrahiert Kanten in der aktiven Ebene oder Auswahl und 
-umgibt diese mit einem neonartigen Glühen.
-
-\paragraph{Algorithmus} 
-Der Algorithmus besteht aus 2 großen Schleifen (detallierterer Pseudo-Code 
-ist in Algorithmus \ref{algo:neon} zu finden).
-Beide Suchstufen (in jeder Schleife) erfolgen spalten- bzw. zeilenweise und zwar von beiden Seiten simultan,
-so ist in diesem Fall recht unbeliebte automatische Kachelnzerlegung sehr vorteilhaft, da sie Wahrscheinlichkeit dafür erhöht, dass die zum Mergen benötigten Werte noch in Cache zu finden sind.
-
-Für weitere Details siehe Paragraph ``Parallelisierung''.
 
 
-\begin{algorithm}[h]
-\caption{Pseudo-Code des \glqq Neon\grqq-Algorithmus}
-\label{algo:neon}
-\begin{algorithmic}[1]
-\ForAll{$columns \in input$}
-	\State lese eine Spalte aus dem Eingabebild
-	\ForAll{$pixel \in column$}
-		\State berechne neon von oben nach unten
-	\EndFor
-	\ForAll{$pixel \in column$}
-		\State berechne neon von unten nach oben
-	\EndFor
-	\State merge Ergebnisse in eine Spalte
-	\State speichere in Ausgabebild
-\EndFor	
-\ForAll{$rows \in input$}
-	\State lese eine Zeile aus dem Eingabebild
-	\ForAll{$pixel \in row$}
-		\State berechne neon von links nach rechts
-	\EndFor
-	\ForAll{$pixel \in row$}
-		\State berechne neon von rechts nach links
-	\EndFor	
-	\State merge Ergebnisse in eine Zeile
-	\State \label{neon_datenabhaengigkeit} bilde Gradient von dieser Zeile und einer aus dem Ausgabebild
-	\State speichere in Ausgabebild
-\EndFor
-\end{algorithmic}
-\end{algorithm}
-%Beschreibung Algorithmus allgemeinsprachlich, 
-%Pseudocode, visuell
-\paragraph{Portierung}
-\label{neon_portierung}
-1) Einige unnötige Sprachkonstrukte entfernt
-2) Auch viele Variablen umbenannt
-\paragraph{Parallelisierung}
-Es gab auch ursprünglich keine funktionale Abhängigkeit zwischen den beiden Stufen (Schritt 1 und 2),  jedoch ließ sich der Algorithmus trotzdem nur bedingt parallelisieren. Grund dafür war eine Datenabhängigkeit: In der \ref{neon_datenabhaengigkeit}. Zeile des Algorithmus \ref{algo:neon} werden Ergebnisse beider Schritte zusammengeführt. Im sequenziellen Fall hätte es einen guten Grund - bessere Cacheausnutzung - ein der beiden benötigten Felder ist garantiert im Cache (so weit Cache reicht) vorhanden.
-
-========================================
-
-Wird der Algorithmus parallel ausgeführt, so muss diese Datenabhängigkeit z.B. durch zusätzliche temporäre Variablen eliminiert werden. 
-
-========================================
-
-Ursprünglich verfolgten wir den SECTIONS-Ansatz, aber schlechtere Cacheausnutzung. Aus diesem testen wir auch den anderen Ansatz: 1. Schleife ``parallel for'', anschließend (mit impliziter Barriere) die 2. Schleife ``parallel for''.
-
-=======================================
-
-Kritischer Bereich (lese und schreibe in Ausgabebild) wird hier zum Flaschenhals, so mit zunehmender Threadzahl darf die Effizienz schnell fallen.
-
-=======================================
 
 
-Parallelisierbarkeit:
-Der Algorithmus sieht folgender Weise aus:
-	1) zum Anfang erfolgt waagerechte Suche 
-	2) dann Senkrechte,
-	3) zum Schluss werden beide Ergebnisse gemergt
+
+
+
+\input{edge-neon_teil1.tex}
+
+
+
+
+
 
 
 
@@ -264,17 +205,24 @@ Ist der Radius des Filters klein, so kann man nun zusätzlich zu den genannten O
 %Boxplots !!!
 %Statistische Analyse ?!
 %Aus Debug-Output Diagramm erstellen um Anteil des Filters an Gesamtlaufzeit zu verdeutlichen
-\subsection{Neon}
-\paragraph{Korrektheit}
+
+
+%\subsection{Neon}
+%\paragraph{Korrektheit}
 %Bild Eingabe (Duck / matting-global / car-stack?)
 %Vergleich Ausgabe bei Eingabe mit gleichen Parametern GIMP – GEGL Bilder
 %Ergebnis vom Diff
-\paragraph{Laufzeit}
+%\paragraph{Laufzeit}
 %X Durchläufe in Diagram abtragen?
 %System beschreiben (Hardware, Software, Umgebungsvariablen) !!!
 %Boxplots !!!
 %Statistische Analyse ?!
 %Aus Debug-Output Diagramm erstellen um Anteil des Filters an Gesamtlaufzeit zu verdeutlichen
+\input{edge-neon_teil2.tex}
+
+
+
+
 \subsection{Selective Gaussian Blur}
 \paragraph{Korrektheit}
 %Bild Eingabe (Duck / matting-global / car-stack?)
