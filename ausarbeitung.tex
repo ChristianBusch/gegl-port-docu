@@ -55,7 +55,7 @@ Die vorliegende Arbeit soll sowohl unsere Vorgehensweise und Erfahrung als auch 
 
 \paragraph{Algorithmus} 
 
-Das Filter prüft für jeden Pixel im Eingabebild jeweils für jeden Farbkanal ob der Farbwert nicht mehr als um den angegebenen Grenzwert von der Auswahlfarbe abweicht. Trifft dies zu wird jeweils der Farbwert addiert mit dem positiven Betrag der Abweichung in das Ausgabebild geschrieben. Ist die Abweichung größer so wird der Wert dieses Farbkanals für jenen Pixel unverändert in das Ausgabebild übertragen. Ebenfalls unverändert bleibt der Alpha-Wert eines jeden Pixels.
+Das Filter prüft für jeden Pixel im Eingabebild jeweils für jeden Farbkanal ob der Farbwert nicht mehr als um den angegebenen Grenzwert von der Auswahlfarbe abweicht. Trifft dies zu wird jeweils der gewünschte Farbwert addiert mit dem positiven Betrag der Abweichung in das Ausgabebild geschrieben. Ist die Abweichung größer so wird der Wert dieses Farbkanals für jenen Pixel unverändert in das Ausgabebild übertragen. Ebenfalls unverändert bleibt der Alpha-Wert eines jeden Pixels.
 
 \begin{algorithm}[H]
 \caption{Pseudo-Code des \glqq Color Exchange\grqq-Algorithmus}
@@ -80,12 +80,12 @@ Das Filter prüft für jeden Pixel im Eingabebild jeweils für jeden Farbkanal o
 \end{algorithm}
 
 \paragraph{Portierung}
-Bei der Portierung wurde vorerst die Farbrepräsentation in R'G'B'A mit 8 Bit je Farbkanal beibehalten. Ferner enthält die Implementierung innerhalb von GIMP bereits einen Fehler. Dieser wurde bei der Portierung zunächst übernommen um einen Vergleich zwischen portierter und der ursprünglichen Variante dieses Filters ziehen zu können. Die fragliche Code-Stelle findet sich in Zeile 6 von \autoref{algo:exchange}. Durch die Verwendung des Betrages der Differenz an jener Stelle führen insbesondere hohe Schwellwerte zu unerwünschten Artefakten. Der Fehler wurde bereits den GEGL-Entwicklern mitgeteilt und wird von uns zu einem späteren Zeitpunkt korrigiert.
+Bei der Portierung wurde vorerst die Farbrepräsentation in R'G'B'A mit 8 Bit je Farbkanal beibehalten. Ferner enthält die Implementierung innerhalb von GIMP bereits einen Fehler. Dieser wurde bei der Portierung ebenfalls übernommen um einen Vergleich zwischen portierter und der ursprünglichen Variante dieses Filters ziehen zu können. Die fragliche Code-Stelle findet sich in Zeile 6 von \autoref{algo:exchange}. Durch die Verwendung des Betrages der Differenz an jener Stelle führen insbesondere hohe Schwellwerte zu unerwünschten Artefakten. Der Fehler wurde bereits den GEGL-Entwicklern mitgeteilt und wird von uns zu einem späteren Zeitpunkt korrigiert.
 
 \paragraph{Parallelisierung}
 Bei diesem Filter handelt es sich um einen sogenannten Punktfilter, was bedeutet, dass ein Ausgabepixel von genau einem Eingabepixel abhängt. Somit ist keine Koordination zwischen den einzelnen Threads notwendig. Dies ist ein glücklicher Umstand für die Parallalisierung, da diese besonders einfach ausfällt. So einfach, dass diese Klasse von Problemen in der Fachsprache \glqq embarassingly parallel\grqq also etwa \glqq peinlich parallel\grqq genannt wird.
 
-Zur Parallelisierung wurde OpenMP verwendet. Hierbei wurde das Eingabebild in Streifen auf die jeweiligen Threads aufgeteilt. Ein Thread berechnet somit jeweils einen oder mehrere Streifen aus beieinander liegenden Pixeln.
+Zur Parallelisierung wurde OpenMP verwendet. Hierbei wurde das Eingabebild in (nicht zwangsläufig zusammenhängenden) Streifen auf die jeweiligen Threads aufgeteilt. Ein Thread berechnet somit jeweils einen oder mehrere Streifen aus beieinander liegenden Pixeln.
 
 \begin{algorithm}[H]
 \caption{Pseudo-Code des \glqq Color Exchange\grqq-Algorithmus in OpenMP}
@@ -113,7 +113,7 @@ Zur Parallelisierung wurde OpenMP verwendet. Hierbei wurde das Eingabebild in St
 \end{algorithmic}
 \end{algorithm}
  
-Eine weitere Möglichkeit bestünde darin jeweils die Betrachtung der Farbkanäle eines Pixels zu Parallelisieren. Diese Idee wurde jedoch als zu kleinschrittig verworfen. Der Koordinierungsaufwand für die Threads dürfte den Zeitgewinn bei der Berechnung mehr als aufwiegen. Denkbar wäre es jedoch diese Parallelisierung mittels Vektoreinheiten der CPU durchzuführen, also beispielsweise SSE zu verwenden.
+Eine weitere Möglichkeit zur Parallelisierung bestünde darin jeweils die Betrachtung der Farbkanäle eines Pixels zu Parallelisieren. Diese Idee wurde jedoch als zu kleinschrittig verworfen. Der Koordinierungsaufwand (Threads starten, stoppen, etc.) für die Threads dürfte den Zeitgewinn bei der Berechnung mehr als aufwiegen. Denkbar wäre es jedoch diese Parallelisierung mittels Vektoreinheiten der CPU durchzuführen, also beispielsweise SSE zu verwenden.
 
 Weiterhin gestaltet sich eine Parallelisierung mittels OpenCL recht einfach. Hierfür wählt man eine eindimmensionale Organisierung der Work Items und bearbeitet pro Work Item genau einen Pixel. Die äußere Schleife des sequenziellen Algorithmus fällt somit weg. Die oberen und unteren Grenzwerte werden einmal auf der CPU berechnet und der GPU als Konstanten übergeben. Diese Implementierung wäre sehr wahrscheinlich durch die Speicherbandbreite auf der GPU und durch die Bandbreite zwischen Host und GPU limitiert, da sehr wenige Berechnungen auf den Daten ausgeführt werden.
 
@@ -144,7 +144,6 @@ Weiterhin gestaltet sich eine Parallelisierung mittels OpenCL recht einfach. Hie
 Dieses Filter wurde im Gegensatz zu den anderen Filtern nicht nur mittels OpenMP sondern auch mittels OpenCL parallelisiert. 
 
 
-
 Durch die Portierung des Algorithmus nach OpenCL fielen die äußeren beiden Schleifen weg, da die Iteration über alle Pixel durch die Abbildung auf die Work Items erfolgte. Die Work Items wurden zweidimensional indiziert und es ist genau ein Work Item für genau einen Pixel zuständig.
 Es wurden wo möglich Vector-Datentypen (float4) verwendet um sowohl Speicherzugriffe zu optimieren als auch um von der Nutzung der Vector-Recheneinheiten zu profitieren.
 
@@ -163,22 +162,18 @@ Das Bild wird in mehrere Teilbilder zerlegt, deren Anzahl gleich der Zahl der Wo
 
 % Bild einfügen
 
-Dies führt zu mehr Zugriffen auf den globalen Speicher, was somit die Laufzeit erhöht, wenn dies nicht durch Latency Hiding also das "Verschleiern" der Latenz durch die Überbrückung der Wartezeit für Speicherzugriffe durch andere Operationen vermieden werden kann.
+Dies führt zu mehr Zugriffen auf den globalen Speicher, was somit die eigensparte Laufzeit wieder ein Stück weit aufzehrt, wenn dies nicht durch Latency Hiding also das "Verschleiern" der Latenz durch die Überbrückung der Wartezeit für Speicherzugriffe durch andere Operationen vermieden werden kann.
 Darüber hinaus wächst aber auch der Speicherverbrauch an lokalem Speicher. Bei großen Radien führt dies dazu, dass weniger Work Units gleichzeitig ausgeführt werden können. Dies wiederum hat einen negativen Einfluss auf das Latency Hiding, da weniger Arbeit für das Überbrücken der Wartezeiten durch Speicherzugriffe vorhanden ist. 
 
 
 % Bild einfügen?
 
-Große Radien können weiterhin dazu führen, dass die zur Berechnung notwendige Umgebung (halo) nicht vollständig in den lokalen Speicher passt. Somit wird ein aufwändigeres Speichermanagement notwendig. Die Größe des Radius ab dem diese Problematik auftritt lässt sich jedoch mit einer weiteren Optimierung zumindest erhöhen.
-
-	Vorteil: Höhere Geschwindigkeit
-
-	Nachteil: Höhere Code-Komplexität, maximaler Radius beschränkt
+Große Radien können weiterhin dazu führen, dass die zur Berechnung notwendige Umgebung (Halo) nicht vollständig in den lokalen Speicher passt. Somit wird ein aufwändigeres Speichermanagement notwendig. Die Größe des Radius ab dem diese Problematik auftritt lässt sich jedoch mit einer weiteren Optimierung zumindest erhöhen.
 
 
 \item Eine weitere angedachte Optimierung war die Zerlegung des Filters in zwei Filter, die nacheinander aufgerufen werden. Man kann diesen Filter in eine horizontale und eine vertikale Operation zerlegen. Somit benötigt man nur noch die Umgebung in einer Ausrichtung (horizontal oder vertikal) in dem jeweiligen Filter. Dies spart Speicherzugriffe. Erschwerend kommt bei diesem Filter jedoch hinzu, dass man von einem Filter zum nächsten auch die Koeffizienten pro Pixel ebenfalls mitführen müsste -- entweder über einen seperaten Buffer oder aber gemeinsam in einem Buffer zusammen mit den Farbwerten. Ersteres ist hierbei in Hinblick auf das Speicher-Alignment vermutlich vorzuziehen, dies müsste man jedoch empirisch überprüfen.
 
-% Bild einfügen.
+% Bild einfügen.	Vorteil: Höhere Geschwindigkeit
 
 \item Kombiniert man nun die Zerlegung des Filters in eine horizontalen und einen vertikalen mit der Nutzung lokalen Speichers, so ergeben sich Synergieeffekte. Es können nun die Halos größerer Radien im lokalen Speicher Platz finden.
 
@@ -213,9 +208,9 @@ Der GEGL-Filter führt innerhalb GIMP bei gleichen Parametern zu den selben Erge
 %Vergleich Ausgabe bei Eingabe mit gleichen Parametern GIMP – GEGL Bilder
 %Ergebnis vom Diff
 \paragraph{Laufzeit}
-Verwendet man 2 OpenMP-Threads, so wird der Code minimal schneller ausgeführt als mit einem Thread\footnote{Zur Ermittlung der Laufzeit wurde der Code jeweils 50 mal ausgeführt und die Laufzeit erfasst. Das Testsystem hierfür war Ubuntu 13.12 auf einem Q9550 mit 8 GB RAM. Auf die Verwendung des Institusrechners für Benchmarking wurde verzichtet.}, wie in \autoref{fig:CE_2} zu sehen ist. Dieser kaum merkliche Geschwindigkeitszuwachs rechtfertigt die gestiegene Code-Komplexität jedoch in keiner Weise.
+Verwendet man zwei OpenMP-Threads, so wird der Code minimal schneller ausgeführt als mit einem Thread\footnote{Zur Ermittlung der Laufzeit wurde der Code jeweils 50 mal ausgeführt und die Laufzeit erfasst. Das Testsystem hierfür war Ubuntu 13.12 auf einem Q9550 mit 8 GB RAM. Auf die Verwendung des Institusrechners für Benchmarking wurde verzichtet.}, wie in \autoref{fig:CE_2} zu sehen ist. Dieser kaum merkliche Geschwindigkeitszuwachs rechtfertigt die gestiegene Code-Komplexität jedoch in keiner Weise.
 
-Entgegen unseren Erwartungen wird dieses Filter mit zunehmender Anzahl an Threads langsamer statt schneller. Insbesondere bei der Ausführung mit 4 Threads wird dieses Verhalten besonders deutlich.(siehe \autoref{algo:exchange_par}) Somit muss die Verwendbarkeit dieser Parallelisierungsstrategie für die praktische Nutzung entschieden verneint werden.
+Entgegen unseren Erwartungen wird dieses Filter mit zunehmender Anzahl an Threads langsamer statt schneller. Insbesondere bei der Ausführung mit vier Threads wird dieses Verhalten besonders deutlich.(siehe \autoref{algo:exchange_par}) Somit muss die Verwendbarkeit dieser Parallelisierungsstrategie für die praktische Nutzung entschieden verneint werden.
 \begin{figure}[H]
 \centering
 \includegraphics[scale=0.7]{graphs/seq.pdf}
@@ -297,16 +292,21 @@ unteres Quartil 	& 3.38 		& 3.39 		& 3.3720 		& 7.178 		& 53.18 \\
 %Aus Debug-Output Diagramm erstellen um Anteil des Filters an Gesamtlaufzeit zu verdeutlichen
 %Warum wird es mit OpenMP langsamer?
 \section{Abschließende Betrachtung}
-Einen unerwartet großen Anteil an der aufgewandten Zeit hat die Portierung in Anspruch genommen. Insbesondere das Verständnis für die Funktionsweise von GEGL hat sich erst nach tiefgründiger Beschäftigung eingestellt. Waren dann GEGL und der zu portierende Algorithmus erst einmal verstanden lief die Portierung relativ flüssig ab. Das Tiling durch GEGL hat jedoch hin und wieder für längere Denkpausen gesorgt.
-Positiv ist anzumerken, dass die Quellcode-Dateien infolge der Portierung nach GEGL deutlich übersichtlicher geworden sind, da der ganze Boiler Plate-Code, wie z.B. GUI-Erstellung und Aktualisierung, wegfällt.
-Die Parallelisierung mittels OpenMP ist sicherlich nicht die optimale Lösung für GEGL-Filter, da das Tiling eigentlich ebenfalls als Parallelisierungsmechanismus vorgesehen ist. Nichtsdestotrotz 
+Einen unerwartet großen Anteil an der aufgewandten Zeit hat die Portierung in Anspruch genommen. Insbesondere das Verständnis für die Funktionsweise von GEGL und den Unterschieden der Farbräume hat sich erst nach tiefgründiger Beschäftigung eingestellt. Waren dann GEGL und der zu portierende Algorithmus erst einmal verstanden lief die Portierung relativ flüssig ab. Das Tiling durch GEGL hat jedoch hin und wieder für längere Denkpausen gesorgt.
+
+Positiv ist anzumerken, dass die Quellcode-Dateien infolge der Portierung nach GEGL deutlich übersichtlicher geworden sind, da der ganze Code für in allen Filtern wiederkehrende Aufgaben wie z.B. GUI-Erstellung und Aktualisierung, wegfällt.
+
+Die Parallelisierung mittels OpenMP ist sicherlich nicht die optimale Lösung für GEGL-Filter, da das Tiling eigentlich als Parallelisierungsmechanismus vorgesehen ist. Somit ist ein Teil der Parallelisierung eher als akademische Übung zu betrachten. Nichtsdestotrotz dürfte für jedes Mitglied der Gruppe ein Informations- und Erfahrzungsgewinn zu verzeichnen sein. Insbesondere die Integration in den Entwicklungsprozess eines Open-Source-Projektes fand viel Zustimmung und war ein motivierender Faktor.
 
 \section{Ausblick}
+Viele Filter warten noch darauf von GIMP nach GEGL portiert zu werden. Die gesammelten Erfahrungen aus der bereits durchgeführten Portierung werden weitere sicherlich begünstigen.
+
+Aber auch bei den bereits portierten Filtern gibt es teilweise noch Raum für Verbesserungen. So könnten auch die restlichen Filter nach OpenCL portiert werden, es gibt in den GIMP-Filtern diverse kleine Bugs beziehungsweise Verhalten, dass man als Nutzer nicht erwarten würde. In Absprache mit der GIMP- und GEGL-Community werden wir auch nach Abschluss der vorliegenden Arbeit sicherlich noch die ein oder andere Zeile Code in GEGL einfließen lassen.
+
+Unsere Portierungen werden wir von den OpenMP-Konstrukten bereinigt als Patches für das GEGL-Projekt einreichen. Die Vorgehensweise hierfür wurden bereits mit GEGL-Entwicklern abgesprochen, sodass von einer baldigen Erledigung auszugehen ist.
 %Umstellung auf Floats
 %Behebung des Bugs
 %Implementierung in OpenCL
 \section{Grußworte}
-Ich bedanke mich bei meinen Armen dafür, dass sie immer an meiner Seite waren, meinen Beinen, die mich stets gestützt haben und meinen Fingern -- auf euch konnte ich immer zählen.
-%\section{Anhang}
-%\lstinputlisting[caption=Color Exchange,language=C]{color-exchange.c}
+Wir bedanken uns an dieser Stelle bei der GIMP- und GEGL-Community, die nicht nur diese äußerst nützlichen Software-Produkte entwickeln und der Menschheit frei und quelloffen zur Verfügung stellen sondern auch zu jeder Tages- und Nacht-Zeit sehr schnell mit hilfreichen Antworten auf Fragen zur Seite standen. Auch bei Thomas und Luis, den Betreuern dieser Arbeit, wollen wir uns an dieser Stelle für die motivierte und fundierte Betreuung bedanken.
 \end{document}
