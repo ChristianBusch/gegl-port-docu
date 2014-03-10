@@ -1,3 +1,4 @@
+\newpage
 %% edge-neon_teil2.tex
 \subsection{Neon}
 \paragraph{Korrektheit}
@@ -17,8 +18,25 @@ Wird das Bild nur in senkrechte oder keine Kacheln zerlegt, so stimmen die Ausga
 %Boxplots !!!
 %Statistische Analyse ?!
 %Aus Debug-Output Diagramm erstellen um Anteil des Filters an Gesamtlaufzeit zu verdeutlichen
+Tabelle \ref{tab:NEON_runtime} enthält wichtigste Daten über die Laufzeit dieses Filters in verschiedenen Konfigurationen. 
 
-\begin{table}[H]
+Manche Messungen sind mit schedule(dynamic) durchgeführt, solche sind mit dem ``d''-Zeichen neben der Threadszahl markiert. Wie man der Tabelle entnehmen kann, liegt der entstehende Vorteil durch schedule(dynamic) mit 4 Threads unter 1\%. Bei einer geringeren Threadszahl zeigt sich dynamische Aufteilung bediengt durch Overhead sogar störend (nicht in der Tabelle aufgelistet).
+
+Der ursprünglich verfolgte Ansatz ``Sections'' konnte  unsere Erwartungen leider nicht erfüllen, und schließt die Liste in allen Tests ab. Eine wichtige Anmerkung an dieser Stelle ist, dass für innere Parallelität hier SET\_NESTED=TRUE essentiell ist.
+
+Der konservative Ansatz zeigte sich im Gegenteil zu Section sehr gut. Hier lässt sich eine Abhängigkeit zwischen Threadszahl und der ausgewählten Methode beobachten. Während Ansatz ohne Datenabhängigket (mit zusätzlichen Buffern) sich am besten mit wenigen Threads zeigt, konnte der Ansatz mit Datenabhängigkeit(ohne zusätzliche Buffer) unsere Tests mit 4 Threads am besten abschneiden(unabhängig von Scheduler und Bildgröße).
+
+
+Alle Angaben in Sekunden. Messungen an Intel i5-3570 CPU mit 4 physikalischen Kernen (4 Threads) @ 3.40GHz und 6144 KB L2-Cache, ausgerüstet mit 8 Gb RAM (1600 Mhz) unter Ubuntu 13.10. Gemessen wurde aber nur allgemeine Zeit: mit GEGL aufrufen, mit Bild einlesen, mit Bild abspeichern - nur diese Angaben sind für den Endnutzer interessant.
+
+Info über verwendete Bilder:
+
+raupe.png 6023x3645 Pixel, 7.5 MB
+
+wolf.png 2620x1503 Pixel, 322.8 kB
+
+lenna.png 512x512 Pixel
+\begin{table}[h] 473.8 kB
 \centering
 \begin{tabular}{c p{2cm}p{2cm}p{2cm}}
 \toprule
@@ -28,7 +46,7 @@ Wird das Bild nur in senkrechte oder keine Kacheln zerlegt, so stimmen die Ausga
 
 \multicolumn{4}{c}{Conservative (ohne DA, static)} 	\\
 4d 	& 0.252		&1.124		&6.822			\\
-4 	& 0.252		&4.123		&6.96 		 	\\
+4 	& 0.252		&4.123		&6.960 		 	\\
 2	& 0.270		&1.454		&8.603			\\
 1	& 0.314		&2.157		&12.438 			\\
 
@@ -41,14 +59,26 @@ Wird das Bild nur in senkrechte oder keine Kacheln zerlegt, so stimmen die Ausga
 \cmidrule(r){1-4}
 
 \multicolumn{4}{c}{Conservative (mit DA, static)}	\\
-4d	& 0.246		& 1.130		& 6.761			\\
+4d	& 0.246		& 1.126		& 6.761			\\
 4 	& 0.248		&1.139		& 6.792		 	\\
 2	& 0.268		&1.471		& 8.685 		 	\\
 1	& 0.318		&2.203		&12.772			\\
 
 \bottomrule
 \end{tabular}
+\flushleft{
+\footnotesize{\textsuperscript{*} ein ``'d'-Zeichen neben der Threadszahl weist darauf hin, dass diese Laufzeit mit schedule(dynamic) gemessen wurde, ansonsten mit schedule(static)
+}}
 \caption{Laufzeit von Neon in verschiedenen Konfigurationen}
 \label{tab:NEON_runtime}
 \end{table}
+
+Zusammenfassend kann man volgendes sagen:
+\begin{itemize}
+\item Sections sind in diesem Filter eher ungeeignet (allgemeine Tests ob sections in OpenMP effizient abgearbeitet werden wären erwünscht).
+\item Bei geringen Threadszahlen ist der konservative Ansatz mit Datenabhängigkeit wegen der besseren Cache-Ausnutzung (vgl. zu Kapitel \ref{paragraph:neon_filter}:Parallelisierung) die beste Wahl.
+\item Mit steigender Threadszahl wird der konservative Ansatz ohne Datenabhängigkeit zum Spitzenreiter.
+\item Erzielter SpeedUp: Beste allgemeine 1-Thread-Zeit/Beste allgemeine 4-Thread-Zeit
+lenna: 1.2764, wolf: 1.9190, raupe: 1.8312
+\end{itemize}
 
