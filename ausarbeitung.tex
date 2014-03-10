@@ -133,7 +133,13 @@ Weiterhin gestaltet sich eine Parallelisierung mittels OpenCL recht einfach. Hie
 
 
 \subsection{Selective Gaussian Blur}
-\input{selective-gaussian-blur-body.tex}
+\paragraph{Filter aus Nutzersicht}
+\paragraph{Algorithmus} 
+%Beschreibung Algorithmus allgemeinsprachlich, 
+%Pseudocode, visuell
+\paragraph{Portierung}
+\paragraph{Parallelisierung}
+\subparagraph{OpenMP}
 \subparagraph{OpenCL}
 Dieses Filter wurde im Gegensatz zu den anderen Filtern nicht nur mittels OpenMP sondern auch mittels OpenCL parallelisiert. 
 
@@ -188,20 +194,24 @@ Große Radien können weiterhin dazu führen, dass die zur Berechnung notwendige
 %Ergebnis vom Diff
 \paragraph{Laufzeit}
 Verwendet man 2 OpenMP-Threads, so wird der Code minimal schneller ausgeführt\footnote{Zur Ermittlung der Laufzeit wurde der Code jeweils 50 mal ausgeführt und die Laufzeit erfasst. Das Testsystem hierfür war ein Ubuntu 13.12 auf einem Q9550 mit 8 GB RAM. Auf die Verwendung des Institusrechners für Benchmarking wurde verzichtet.}, wie in \autoref{fig:CE_2} zu sehen ist. Dieser kaum merkliche Geschwindigkeitszuwachs rechtfertigt die gestiegene Code-Komplexität jedoch in keiner Weise.
-
-\begin{figure}[hb]
+\begin{figure}[H]
 \centering
+\includegraphics[scale=0.7]{seq.pdf}
+\caption{Laufzeit von Color Exchange in der sequenziellen Implementierung}
+\label{fig:CE_seq}
+\end{figure}
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.7]{diag_2threads.pdf}
 \caption{Laufzeit von Color Exchange mit einem und zwei OpenMP-Threads}
 \label{fig:CE_2}
 \end{figure}
 Entgegen unseren Erwartungen wird dieses Filter mit zunehmender Anzahl an Threads langsamer statt schneller. Insbesondere bei der Ausführung mit 4 Threads wird dieses Verhalten besonders deutlich.(siehe \autoref{algo:exchange_par}) Somit muss die Verwendbarkeit dieser Parallelisierungsstrategie für die praktische Nutzung entschieden verneint werden.
-
-\begin{figure}[hb]
+\begin{figure}[H]
 \centering
 \includegraphics[scale=0.7]{diag.pdf}
 \caption{Laufzeit von Color Exchange mit einem bis vier OpenMP-Threads}
 \end{figure}
-
 \begin{table}[H]
 \centering
 \begin{tabular}{lrrrrr}
@@ -209,9 +219,9 @@ Entgegen unseren Erwartungen wird dieses Filter mit zunehmender Anzahl an Thread
  & & \multicolumn{4}{c}{OpenMP-Threads} \\
 \cmidrule(r){3-6}
  & seq & 1 & 2 & 3 & 4 \\
-oberes Quartil 	& 0 		& 3.39 		& 3.3720 		& 7.178 		& 53.18 \\
-Median 			& 0 		& 3.39 		& 3.3785 		& 8.360 		& 54.888 \\
-unteres Quartil 	& 0 		& 3.40 		& 3.3910 		& 8.973 		& 55.978 \\
+oberes Quartil 	& 3.39 		& 3.40 		& 3.3910 		& 8.973 		& 55.978 \\
+Median 			& 3.38 		& 3.39 		& 3.3785 		& 8.360 		& 54.888 \\
+unteres Quartil 	& 3.38 		& 3.39 		& 3.3720 		& 7.178 		& 53.18 \\
 \bottomrule
 \end{tabular}
 \caption{Laufzeit von Color Exchange in verschiedenen Konfigurationen}
