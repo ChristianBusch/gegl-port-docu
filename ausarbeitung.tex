@@ -80,7 +80,7 @@ Das Filter prüft für jeden Pixel im Eingabebild jeweils für jeden Farbkanal o
 \end{algorithm}
 
 \paragraph{Portierung}
-Bei der Portierung wurde vorerst die Farbrepräsentation in RGBA mit 8 Bit je Farbkanal beibehalten. Ferner enthält die Implementierung innerhalb von GIMP bereits einen Fehler. Dieser wurde bei der Portierung zunächst übernommen um einen Vergleich zwischen portierter und der ursprünglichen Variante dieses Filters ziehen zu können. Die fragliche Code-Stelle findet sich in Zeile 6 von \autoref{algo:exchange}. Durch die Verwendung des Betrages der Differenz an jener Stelle führen insbesondere hohe Schwellwerte zu unerwünschten Artefakten. Der Fehler wurde bereits den GEGL-Entwicklern mitgeteilt und wird von uns zu einem späteren Zeitpunkt korrigiert.
+Bei der Portierung wurde vorerst die Farbrepräsentation in R'G'B'A mit 8 Bit je Farbkanal beibehalten. Ferner enthält die Implementierung innerhalb von GIMP bereits einen Fehler. Dieser wurde bei der Portierung zunächst übernommen um einen Vergleich zwischen portierter und der ursprünglichen Variante dieses Filters ziehen zu können. Die fragliche Code-Stelle findet sich in Zeile 6 von \autoref{algo:exchange}. Durch die Verwendung des Betrages der Differenz an jener Stelle führen insbesondere hohe Schwellwerte zu unerwünschten Artefakten. Der Fehler wurde bereits den GEGL-Entwicklern mitgeteilt und wird von uns zu einem späteren Zeitpunkt korrigiert.
 
 \paragraph{Parallelisierung}
 Bei diesem Filter handelt es sich um einen sogenannten Punktfilter, was bedeutet, dass ein Ausgabepixel von genau einem Eingabepixel abhängt. Somit ist keine Koordination zwischen den einzelnen Threads notwendig. Dies ist ein glücklicher Umstand für die Parallalisierung, da diese besonders einfach ausfällt. So einfach, dass diese Klasse von Problemen in der Fachsprache \glqq embarassingly parallel\grqq also etwa \glqq peinlich parallel\grqq genannt wird.
@@ -95,7 +95,7 @@ Zur Parallelisierung wurde OpenMP verwendet. Hierbei wurde das Eingabebild in St
 \State zerlege Bild in numThreads Teilbereiche
 \State weise jedem Thread seinen Teilbereich $threadInput$ zu
 \ForAll{$thread \in {1..numThreads}$}
-\ForAll{$pixel \in threadInput$}
+\ForAll{$pixel \in threadInput_{thread}$}
   \State $\delta_{color} \gets \abs{ pixel_{color} - from_{color}}$    
   \If{$\forall color: \delta_{color} \leq threshold_{color}$}
     \ForAll{$color$}  
@@ -133,7 +133,13 @@ Weiterhin gestaltet sich eine Parallelisierung mittels OpenCL recht einfach. Hie
 
 
 \subsection{Selective Gaussian Blur}
-\input{selective-gaussian-blur-body.tex}
+\paragraph{Filter aus Nutzersicht}
+\paragraph{Algorithmus} 
+%Beschreibung Algorithmus allgemeinsprachlich, 
+%Pseudocode, visuell
+\paragraph{Portierung}
+\paragraph{Parallelisierung}
+\subparagraph{OpenMP}
 \subparagraph{OpenCL}
 Dieses Filter wurde im Gegensatz zu den anderen Filtern nicht nur mittels OpenMP sondern auch mittels OpenCL parallelisiert. 
 
@@ -183,27 +189,49 @@ Große Radien können weiterhin dazu führen, dass die zur Berechnung notwendige
 \section{Evaluation der Ergebnisse}
 \subsection{Color Exchange}
 \paragraph{Korrektheit}
+Der GEGL-Filter führt innerhalb GIMP bei gleichen Parametern zu den selben Ergebnissen wie der ursprüngliche GIMP-Filter. Der Aufruf über Konsole / XML-Datei gestaltet sich jedoch schwierig, da die Parameter-Übergabe augenscheinlich im falschen Farbraum stattfindet. Es scheint, als würden die per XML-Datei übergebenen Farbwerte im Format RGBA übergeben, aber als R'G'B'A interpretiert. Dies führt dazu, dass übergebene Farben sehr deutlich verfälscht werden. Eine elegante Möglichkeit zur Umgehung dieses Problems ist uns bisher nicht bekannt. Möglich wäre zwar einen weiteren Parameter (Farbraum) einzuführen, doch dies würde dazu führen, dass auch in der GUI ein weiterer, dort nicht benötigter, Parameter hinzu kommt. Es ist natürlich möglich zwischen den Farbräumen zu konvertieren, doch wäre es weder intuitiv noch bequem für den Nutzer. Somit sollte man den Filter aktuell als nur für die Verwendung innerhalb von GIMP gedacht verstehen.
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.4]{img/matting-global.png}
+\caption{Ausgangsbild}
+\label{fig:CE_aus}
+\end{figure}
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.4]{img/matting-global_gimp.png}
+\caption{Resultat der GIMP-Operation}
+\label{fig:CE_gimp}
+\end{figure}
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.4]{img/matting-global_gegl_in_gimp.png}
+\caption{Resultat der GEGL-Operation innerhalb von GIMP}
+\label{fig:CE_gegl}
+\end{figure}
+
 %Bild Eingabe (Duck / matting-global / car-stack?)
 %Vergleich Ausgabe bei Eingabe mit gleichen Parametern GIMP – GEGL Bilder
 %Ergebnis vom Diff
 \paragraph{Laufzeit}
-Verwendet man 2 OpenMP-Threads, so wird der Code minimal schneller ausgeführt\footnote{Zur Ermittlung der Laufzeit wurde der Code jeweils 50 mal ausgeführt und die Laufzeit erfasst. Das Testsystem hierfür war ein Ubuntu 13.12 auf einem Q9550 mit 8 GB RAM. Auf die Verwendung des Institusrechners für Benchmarking wurde verzichtet.}, wie in \autoref{fig:CE_2} zu sehen ist. Dieser kaum merkliche Geschwindigkeitszuwachs rechtfertigt die gestiegene Code-Komplexität jedoch in keiner Weise.
+Verwendet man 2 OpenMP-Threads, so wird der Code minimal schneller ausgeführt als mit einem Thread\footnote{Zur Ermittlung der Laufzeit wurde der Code jeweils 50 mal ausgeführt und die Laufzeit erfasst. Das Testsystem hierfür war Ubuntu 13.12 auf einem Q9550 mit 8 GB RAM. Auf die Verwendung des Institusrechners für Benchmarking wurde verzichtet.}, wie in \autoref{fig:CE_2} zu sehen ist. Dieser kaum merkliche Geschwindigkeitszuwachs rechtfertigt die gestiegene Code-Komplexität jedoch in keiner Weise.
+
+Entgegen unseren Erwartungen wird dieses Filter mit zunehmender Anzahl an Threads langsamer statt schneller. Insbesondere bei der Ausführung mit 4 Threads wird dieses Verhalten besonders deutlich.(siehe \autoref{algo:exchange_par}) Somit muss die Verwendbarkeit dieser Parallelisierungsstrategie für die praktische Nutzung entschieden verneint werden.
 \begin{figure}[H]
 \centering
-%\includegraphics[scale=0.7]{seq.pdf}
+\includegraphics[scale=0.7]{graphs/seq.pdf}
 \caption{Laufzeit von Color Exchange in der sequenziellen Implementierung}
 \label{fig:CE_seq}
 \end{figure}
 \begin{figure}[H]
 \centering
-%\includegraphics[scale=0.7]{diag_2threads.pdf}
+\includegraphics[scale=0.7]{graphs/diag_2threads.pdf}
 \caption{Laufzeit von Color Exchange mit einem und zwei OpenMP-Threads}
 \label{fig:CE_2}
 \end{figure}
-Entgegen unseren Erwartungen wird dieses Filter mit zunehmender Anzahl an Threads langsamer statt schneller. Insbesondere bei der Ausführung mit 4 Threads wird dieses Verhalten besonders deutlich.(siehe \autoref{algo:exchange_par}) Somit muss die Verwendbarkeit dieser Parallelisierungsstrategie für die praktische Nutzung entschieden verneint werden.
+
 \begin{figure}[H]
 \centering
-\includegraphics[scale=0.7]{diag.pdf}
+\includegraphics[scale=0.7]{graphs/diag.pdf}
 \caption{Laufzeit von Color Exchange mit einem bis vier OpenMP-Threads}
 \end{figure}
 \begin{table}[H]
