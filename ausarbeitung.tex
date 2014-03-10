@@ -53,6 +53,23 @@ Die vorliegende Arbeit soll sowohl unsere Vorgehensweise und Erfahrung als auch 
 \paragraph{Filter aus Nutzersicht}
 \glqq Dieses Filter ersetzt eine Farbe durch eine andere.\grqq\footnote{\url{http://docs.gimp.org/de/plug-in-exchange.html}} -- so steht es in der Dokumentation von GIMP und fasst die Grundidee des Filters grob zusammen. Tatsächlich ermöglicht das Filter jedoch nicht nur exakt eine Farbe durch eine andere zu ersetzen, sondern auch ähnliche Farben durch eine andere zu ersetzen. Somit können auch ganze Farbverläufe unter Beibehaltung der Abstufung mit einer anderen Farbe versehen werden.
 
+\begin{figure}[H]
+\centering
+\begin{minipage}{.5\textwidth}
+\includegraphics[scale=0.15]{img/matting-global.png}
+\caption{Ausgangsbild}
+\label{fig:CE_aus}
+%%\end{figure}
+\end{minipage}%
+%%\begin{figure}[H]
+\centering
+\begin{minipage}{.5\textwidth}
+\includegraphics[scale=0.15]{img/matting-global_gegl_in_gimp.png}
+\caption{Resultat der GEGL-Operation innerhalb von GIMP}
+\label{fig:CE_gegl}
+\end{minipage}
+\end{figure}
+
 \paragraph{Algorithmus} 
 
 Das Filter prüft für jeden Pixel im Eingabebild jeweils für jeden Farbkanal ob der Farbwert nicht mehr als um den angegebenen Grenzwert von der Auswahlfarbe abweicht. Trifft dies zu wird jeweils der gewünschte Farbwert addiert mit dem positiven Betrag der Abweichung in das Ausgabebild geschrieben. Ist die Abweichung größer so wird der Wert dieses Farbkanals für jenen Pixel unverändert in das Ausgabebild übertragen. Ebenfalls unverändert bleibt der Alpha-Wert eines jeden Pixels.
@@ -185,32 +202,18 @@ Große Radien können weiterhin dazu führen, dass die zur Berechnung notwendige
 \subsection{Color Exchange}
 \paragraph{Korrektheit}
 Der GEGL-Filter führt innerhalb GIMP bei gleichen Parametern zu den selben Ergebnissen wie der ursprüngliche GIMP-Filter. Der Aufruf über Konsole / XML-Datei gestaltet sich jedoch schwierig, da die Parameter-Übergabe augenscheinlich im falschen Farbraum stattfindet. Es scheint, als würden die per XML-Datei übergebenen Farbwerte im Format RGBA übergeben, aber als R'G'B'A interpretiert. Dies führt dazu, dass übergebene Farben sehr deutlich verfälscht werden. Eine elegante Möglichkeit zur Umgehung dieses Problems ist uns bisher nicht bekannt. Möglich wäre zwar einen weiteren Parameter (Farbraum) einzuführen, doch dies würde dazu führen, dass auch in der GUI ein weiterer, dort nicht benötigter, Parameter hinzu kommt. Es ist natürlich möglich zwischen den Farbräumen zu konvertieren, doch wäre es weder intuitiv noch bequem für den Nutzer. Somit sollte man den Filter aktuell als nur für die Verwendung innerhalb von GIMP gedacht verstehen.
-\begin{figure}[H]
-\centering
-\includegraphics[scale=0.4]{img/matting-global.png}
-\caption{Ausgangsbild}
-\label{fig:CE_aus}
-\end{figure}
-\begin{figure}[H]
-\centering
-\includegraphics[scale=0.4]{img/matting-global_gimp.png}
-\caption{Resultat der GIMP-Operation}
-\label{fig:CE_gimp}
-\end{figure}
-\begin{figure}[H]
-\centering
-\includegraphics[scale=0.4]{img/matting-global_gegl_in_gimp.png}
-\caption{Resultat der GEGL-Operation innerhalb von GIMP}
-\label{fig:CE_gegl}
-\end{figure}
+
+
 
 %Bild Eingabe (Duck / matting-global / car-stack?)
 %Vergleich Ausgabe bei Eingabe mit gleichen Parametern GIMP – GEGL Bilder
 %Ergebnis vom Diff
 \paragraph{Laufzeit}
-Verwendet man zwei OpenMP-Threads, so wird der Code minimal schneller ausgeführt als mit einem Thread\footnote{Zur Ermittlung der Laufzeit wurde der Code jeweils 50 mal ausgeführt und die Laufzeit erfasst. Das Testsystem hierfür war Ubuntu 13.12 auf einem Q9550 mit 8 GB RAM. Auf die Verwendung des Institusrechners für Benchmarking wurde verzichtet.}, wie in \autoref{fig:CE_2} zu sehen ist. Dieser kaum merkliche Geschwindigkeitszuwachs rechtfertigt die gestiegene Code-Komplexität jedoch in keiner Weise.
+Zur Ermittlung des Laufzeitverhaltens wurde ein Bild mit 3264x2448 Pixeln gewählt. \footnote{Mit diesen Dimensionen dürfte es einem typischen, zu verarbeitenden Bild entsprechen.} Der Code wurde jeweils 50 mal ausgeführt und die Laufzeit mittels \textit{time} erfasst. Das Testsystem hierfür war Ubuntu 13.12 auf einem Q9550 mit 8 GB RAM. Auf die Verwendung des Institusrechners für Benchmarking wurde verzichtet.
 
-Entgegen unseren Erwartungen wird dieses Filter mit zunehmender Anzahl an Threads langsamer statt schneller. Insbesondere bei der Ausführung mit vier Threads wird dieses Verhalten besonders deutlich.(siehe \autoref{algo:exchange_par}) Somit muss die Verwendbarkeit dieser Parallelisierungsstrategie für die praktische Nutzung entschieden verneint werden.
+Verwendet man zwei OpenMP-Threads, so wird der Code minimal schneller ausgeführt als mit einem Thread, wie in \autoref{fig:CE_2} zu sehen ist. Dieser kaum merkliche Geschwindigkeitszuwachs rechtfertigt die gestiegene Code-Komplexität jedoch in keiner Weise.
+
+Entgegen unseren Erwartungen wird dieses Filter mit zunehmender Anzahl an Threads langsamer statt schneller. Insbesondere bei der Ausführung mit vier Threads wird dieses Verhalten besonders deutlich.(siehe \autoref{algo:exchange_par}) Somit muss die Verwendbarkeit dieser Parallelisierungsstrategie für die praktische Nutzung entschieden verneint werden. Dieses Ergebnis hat uns dazu bewogen nicht den Institutsrechner für Testläufe mit einer noch größeren Anzahl an Threads zu belegen.
 \begin{figure}[H]
 \centering
 \includegraphics[scale=0.7]{graphs/seq.pdf}
