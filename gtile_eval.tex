@@ -3,7 +3,7 @@
 Die Korrektheit der Implementierung des portierten Algorithmus wurde mithilfe der Gegl-Testumgebung geprüft mit dem Ergebnis, dass für verschieden gewählte Parameter stets eine Übereinstimmung mit dem GIMP-Referenzbild besteht.
 
 \paragraph{Laufzeit}
-Das Testsystem ist ein Intel Core-2-Duo 2,2 GHz Notebook mit zwei Kernen, 2GB RAM und Linux Ubuntu 13.04 als Betriebsystem. Als Testbild wurde ein 5000x3450 Pixel großes png-Bild mit 21 MB Dateigröße verwendet. Als Umgebungsvariablen für Gegl wurden die Default-Werte verwendet. Es wurden jeweils 50 Testläufe durchgeführt, sowohl für die sequentielle Version, als auch für ein bzw. zwei Threads in der parallelen Version. Die Ergebnisse werden in Abbildung~\ref{fig:gtile-runs} aufgezeigt. Man sieht, dass die parallele Version etwas schlechter abschneidet als die sequentielle. Die Parallelisierung dieses Filters lohnt sich demnach nicht.
+Das Testsystem ist ein Intel Core-2-Duo 2,2 GHz Notebook mit zwei Kernen, 2GB RAM und Linux Ubuntu 13.04 64-bit als Betriebsystem. Als Testbild wurde ein 5000x3450 Pixel großes png-Bild mit 21 MB Dateigröße verwendet. Als Umgebungsvariablen für Gegl wurden die Default-Werte verwendet und die Parameter des Filters für Breite und Höhe der Kacheln waren jeweils 47 Pixel. Es wurden jeweils 50 Testläufe durchgeführt, sowohl für die sequentielle Version, als auch für ein bzw. zwei Threads in der parallelen Version. Die Ergebnisse werden in Abbildung~\ref{fig:gtile-runs} aufgezeigt. Man sieht, dass die parallele Version etwas schlechter abschneidet als die sequentielle. Die Parallelisierung dieses Filters lohnt sich demnach nicht.
 
 \begin{figure}[h]
 \begin{center}
