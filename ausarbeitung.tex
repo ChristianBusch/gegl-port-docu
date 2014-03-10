@@ -133,7 +133,13 @@ Weiterhin gestaltet sich eine Parallelisierung mittels OpenCL recht einfach. Hie
 
 
 \subsection{Selective Gaussian Blur}
-\input{selective-gaussian-blur-body.tex}
+\paragraph{Filter aus Nutzersicht}
+\paragraph{Algorithmus} 
+%Beschreibung Algorithmus allgemeinsprachlich, 
+%Pseudocode, visuell
+\paragraph{Portierung}
+\paragraph{Parallelisierung}
+\subparagraph{OpenMP}
 \subparagraph{OpenCL}
 Dieses Filter wurde im Gegensatz zu den anderen Filtern nicht nur mittels OpenMP sondern auch mittels OpenCL parallelisiert. 
 
@@ -275,7 +281,6 @@ unteres Quartil 	& 3.38 		& 3.39 		& 3.3720 		& 7.178 		& 53.18 \\
 
 \subsection{Selective Gaussian Blur}
 \paragraph{Korrektheit}
-Das resultierendes Bild von GEGL Filter hat einen kleinen globalen Fehler im Vergleich zum GIMP bearbeitenden Bild. Dieser Fehler entsteht durch die Berechnung in Floats statt Integers mit höherer Genauigkeit und ist visuell nicht zu sehen. Bei der Überprüfung des Ergebnisses wurden verschiedene Bilder mir verschiedenen Filterparameter mit GIMP bearbetenen Referenzbildern verglichen. In allen Fällen war die Abweichung von den Refenrenzbildern minimal, was nur den Unterschied in der Rechnungsgenauigkeit bedeutet.
 %Bild Eingabe (Duck / matting-global / car-stack?)
 %Vergleich Ausgabe bei Eingabe mit gleichen Parametern GIMP – GEGL Bilder
 %Ergebnis vom Diff
@@ -303,5 +308,5 @@ Unsere Portierungen werden wir von den OpenMP-Konstrukten bereinigt als Patches 
 %Behebung des Bugs
 %Implementierung in OpenCL
 \section{Grußworte}
-Wir bedanken uns an dieser Stelle bei der GIMP- und GEGL-Community, die nicht nur diese äußerst nützlichen Software-Produkte entwickeln und der Menschheit frei und quelloffen zur Verfügung stellen sondern auch zu jeder Tages- und Nacht-Zeit sehr schnell mit hilfreichen Antworten auf Fragen zur Seite standen. Auch bei den Betreuern dieser Arbeit wollen wir uns an dieser Stelle für die motivierte und fundierte Betreuung bedanken.
+Wir bedanken uns an dieser Stelle bei der GIMP- und GEGL-Community, die nicht nur diese äußerst nützlichen Software-Produkte entwickeln und der Menschheit frei und quelloffen zur Verfügung stellen sondern auch zu jeder Tages- und Nacht-Zeit sehr schnell mit hilfreichen Antworten auf Fragen zur Seite standen. Auch bei Thomas und Luis, den Betreuern dieser Arbeit, wollen wir uns an dieser Stelle für die motivierte und fundierte Betreuung bedanken.
 \end{document}
