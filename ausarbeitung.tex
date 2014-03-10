@@ -280,6 +280,7 @@ unteres Quartil 	& 3.38 		& 3.39 		& 3.3720 		& 7.178 		& 53.18 \\
 
 \subsection{Selective Gaussian Blur}
 \paragraph{Korrektheit}
+Das resultierendes Bild von GEGL Filter hat einen kleinen globalen Fehler im Vergleich zum GIMP bearbeitenden Bild. Dieser Fehler entsteht durch die Berechnung in Floats statt Integers mit höherer Genauigkeit und ist visuell nicht zu sehen. Bei der Überprüfung des Ergebnisses wurden verschiedene Bilder mir verschiedenen Filterparameter mit GIMP bearbetenen Referenzbildern verglichen. In allen Fällen war die Abweichung von den Refenrenzbildern minimal, was nur den Unterschied in der Rechnungsgenauigkeit bedeutet.
 %Bild Eingabe (Duck / matting-global / car-stack?)
 %Vergleich Ausgabe bei Eingabe mit gleichen Parametern GIMP – GEGL Bilder
 %Ergebnis vom Diff
