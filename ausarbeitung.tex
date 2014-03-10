@@ -281,10 +281,25 @@ unteres Quartil 	& 3.38 		& 3.39 		& 3.3720 		& 7.178 		& 53.18 \\
 
 \subsection{Selective Gaussian Blur}
 \paragraph{Korrektheit}
-%Bild Eingabe (Duck / matting-global / car-stack?)
-%Vergleich Ausgabe bei Eingabe mit gleichen Parametern GIMP – GEGL Bilder
-%Ergebnis vom Diff
+Das resultierendes Bild von GEGL Filter hat einen kleinen globalen Fehler im Vergleich zum GIMP bearbeitenden Bild. Dieser Fehler entsteht durch die Berechnung in Floats statt Integers mit höherer Genauigkeit und ist visuell nicht zu sehen. Bei der Überprüfung des Ergebnisses wurden verschiedene Bilder mir verschiedenen Filterparameter mit GIMP bearbetenen Referenzbildern verglichen. In allen Fällen war die Abweichung von den Refenrenzbildern minimal, was nur den Unterschied in der Rechnungsgenauigkeit bedeutet.
+
 \paragraph{Laufzeit}
+\autoref{tab:sgb} enthält wichtigste Daten über die Laufzeit dieses Filters in verschiedenen Konfigurationen. Alle Angaben in Sekunden. Messungen an Intel® Core i5-2520M Processor, 8 GB RAM unter Debian GNU/Linux 7 amd64. Das Testbild war 512x512 Pixel groß. Filterparameter waren: Radius 20, Delta 50. Es wurde die Ausführungszeit für die gesamte GEGL Operation mit Bildeinlesen, Bearbeiten, Speichern gemessen.
+
+Man sieht, dass die Ausführungszeit von der Threadszahl abhängt. Deswegen soll die Threadszahl empirisch festgestellt werden. Erziehler Speedup: der bester Speedup im Vergleich zu der schnellsten GIMP MMX Version wurde mit 4 Threads erreicht und beträgt 1.13.
+\begin{table}[H]
+\centering
+\begin{tabular}{lrrrrr}
+\toprule
+ & & \multicolumn{4}{c}{OpenMP-Threads} \\
+\cmidrule(r){3-6}
+ & seq & 1 & 2 & 3 & 4 \\
+GEGL SSE 	& 1.810 		& 2.260 		& 1.246 		& 1.304 		& 1.236 \\
+\bottomrule
+\end{tabular}
+\caption{Laufzeit von Selective Gaussian Blur in verschiedenen Konfigurationen}
+\label{tab:sgb}
+\end{table}
 %X Durchläufe in Diagram abtragen?
 %System beschreiben (Hardware, Software, Umgebungsvariablen) !!!
 %Boxplots !!!

@@ -61,7 +61,7 @@ Wenn man den GIMP-Code genauer anschaut, sieht man, dass der GIMP-Code zwei Impl
 
 Zuerst haben wir die C-Implementierung untersucht, um zu verstehen, wie genau das Filter funktioniert. Bei der Portierung nach GEGL müssen alle GEGL-Schnittstellen angepasst werden. Worauf auch beachtet werden muss, dass GIMP in Integers rechnet und GEGL in Floats. Der Zugriff zu Bilddaten ist innerhalb eines Tiles, d.h. die Randpixel müssen richtig bearbeitet werden. 
 
-Nach der ersten Portierung kamen die Zeitmessungen. Die Ausführungszeit von GEGL Version war schlechter als die langsame C-Implementierung von GIMP\footnote{Das Testsystem bei der Laufzeitmessung war: Intel® CoreTM i5-2520M Processor, 8 GB RAM, Debian GNU/Linux 7 amd64. Das Testbild war 512x512 Pixels groß. Filterparameter waren: Radius 20, Delta 50.}. Die Laufzeitmessungen sind in (\autoref{fig:sgb-graph-1}) dargestellt.
+Nach der ersten Portierung kamen die Zeitmessungen. Die Ausführungszeit von GEGL Version war schlechter als die langsame C-Implementierung von GIMP\footnote{Das Testsystem bei der Laufzeitmessung war: Intel® Core i5-2520M Processor, 8 GB RAM, Debian GNU/Linux 7 amd64. Das Testbild war 512x512 Pixel groß. Filterparameter waren: Radius 20, Delta 50.}. Die Laufzeitmessungen sind in (\autoref{fig:sgb-graph-1}) dargestellt.
 
 Die erste Vermutung war, dass das Rechnen in Floats aufwändig ist. Dann haben wir ein Integer Farbformat benutzt, das 8 Bit pro Farbkanal verwendet. Die Berechnung in Integers dauert noch länger.
 
