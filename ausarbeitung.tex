@@ -284,7 +284,7 @@ unteres Quartil 	& 3.38 		& 3.39 		& 3.3720 		& 7.178 		& 53.18 \\
 
 \subsection{Selective Gaussian Blur}
 \paragraph{Korrektheit}
-Das resultierendes Bild von GEGL Filter hat einen kleinen globalen Fehler im Vergleich zum GIMP bearbeitenden Bild. Dieser Fehler entsteht durch die Berechnung in Floats statt Integers mit höherer Genauigkeit und ist visuell nicht zu sehen. Bei der Überprüfung des Ergebnisses wurden verschiedene Bilder mir verschiedenen Filterparameter mit GIMP bearbetenen Referenzbildern verglichen. In allen Fällen war die Abweichung von den Refenrenzbildern minimal, was nur den Unterschied in der Rechnungsgenauigkeit bedeutet.
+Das resultierende Bild von GEGL Filter hat einen kleinen globalen Fehler im Vergleich zum GIMP bearbeitenden Bild. Dieser Fehler entsteht durch die Berechnung in Floats statt Integers mit höherer Genauigkeit und ist visuell nicht zu sehen. Bei der Überprüfung des Ergebnisses wurden verschiedene Bilder mit verschiedenen Filterparameter mit GIMP bearbetenen Referenzbildern verglichen. In allen Fällen war die Abweichung von den Refenrenzbildern minimal, was nur den Unterschied in der Rechnungsgenauigkeit bedeutet.
 
 \paragraph{Laufzeit}
 \autoref{tab:sgb} enthält wichtigste Daten über die Laufzeit dieses Filters in verschiedenen Konfigurationen. Alle Angaben in Sekunden. Messungen an Intel® Core i5-2520M Processor, 8 GB RAM unter Debian GNU/Linux 7 amd64. Das Testbild war 512x512 Pixel groß. Filterparameter waren: Radius 20, Delta 50. Es wurde die Ausführungszeit für die gesamte GEGL Operation mit Bildeinlesen, Bearbeiten, Speichern gemessen.
