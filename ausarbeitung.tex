@@ -133,13 +133,7 @@ Weiterhin gestaltet sich eine Parallelisierung mittels OpenCL recht einfach. Hie
 
 
 \subsection{Selective Gaussian Blur}
-\paragraph{Filter aus Nutzersicht}
-\paragraph{Algorithmus} 
-%Beschreibung Algorithmus allgemeinsprachlich, 
-%Pseudocode, visuell
-\paragraph{Portierung}
-\paragraph{Parallelisierung}
-\subparagraph{OpenMP}
+\input{selective-gaussian-blur-body.tex}
 \subparagraph{OpenCL}
 Dieses Filter wurde im Gegensatz zu den anderen Filtern nicht nur mittels OpenMP sondern auch mittels OpenCL parallelisiert. 
 
@@ -196,13 +190,13 @@ Große Radien können weiterhin dazu führen, dass die zur Berechnung notwendige
 Verwendet man 2 OpenMP-Threads, so wird der Code minimal schneller ausgeführt\footnote{Zur Ermittlung der Laufzeit wurde der Code jeweils 50 mal ausgeführt und die Laufzeit erfasst. Das Testsystem hierfür war ein Ubuntu 13.12 auf einem Q9550 mit 8 GB RAM. Auf die Verwendung des Institusrechners für Benchmarking wurde verzichtet.}, wie in \autoref{fig:CE_2} zu sehen ist. Dieser kaum merkliche Geschwindigkeitszuwachs rechtfertigt die gestiegene Code-Komplexität jedoch in keiner Weise.
 \begin{figure}[H]
 \centering
-\includegraphics[scale=0.7]{seq.pdf}
+%\includegraphics[scale=0.7]{seq.pdf}
 \caption{Laufzeit von Color Exchange in der sequenziellen Implementierung}
 \label{fig:CE_seq}
 \end{figure}
 \begin{figure}[H]
 \centering
-\includegraphics[scale=0.7]{diag_2threads.pdf}
+%\includegraphics[scale=0.7]{diag_2threads.pdf}
 \caption{Laufzeit von Color Exchange mit einem und zwei OpenMP-Threads}
 \label{fig:CE_2}
 \end{figure}

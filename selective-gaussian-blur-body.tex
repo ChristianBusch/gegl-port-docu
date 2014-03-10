@@ -4,8 +4,8 @@
 
 Das Filter hat zwei Parameter: 
 \begin{itemize}
-\item Blur Radius - beeinflusst maßgeblich die Intensität der Wirkung. Der Radius wird in Pixeln angegeben.
-\item Max. Delta - stellt die maximale Farbdifferenz im Bereich von 0 bis 255 pro Farbkanal dar. Dieser Wert beeinflusst maßgeblich, wie gut Kanten
+\item \emph{Blur Radius} - beeinflusst maßgeblich die Intensität der Wirkung. Der Radius wird in Pixeln angegeben.
+\item \emph{Max. Delta} - stellt die maximale Farbdifferenz im Bereich von 0 bis 255 pro Farbkanal dar. Dieser Wert beeinflusst maßgeblich, wie gut Kanten
 gegen das Weichzeichnen geschützt werden.
 \end{itemize}
 
@@ -15,7 +15,6 @@ gegen das Weichzeichnen geschützt werden.
 \caption{Pseudo-Code des \glqq Selective Gaussian Blur\grqq-Algorithmus}
 \label{algo:sel-gaussian}
 \begin{algorithmic}[1]
-
 \ForAll{$rows$ $\in input$}
 	\ForAll{$columns$ $\in input$}
 	\ForAll{$color$ $channels$}
@@ -43,8 +42,49 @@ gegen das Weichzeichnen geschützt werden.
 \EndFor	
 \end{algorithmic}
 \end{algorithm}
-%Beschreibung Algorithmus allgemeinsprachlich, 
-%Pseudocode, visuell
+
+Der Algorithmus funktioniert pixelweise. Jeder Ausgangspixel wird separat bearbeitet, für jeden Pixel werden Werte für Farbkanäle einzeln berechnet. Bei der Berechnung werden benachbarte Pixelwerte mit einer Faltungsmatrix multipliziert, was in \autoref{fig:sgb-grid} dargestellt ist. Die Faltungsmatrix ist 2 * \emph{Radius} groß. Bei der Multiplikation wird jedes benachbarte Pixel mit dem zentralen Eingangspixel verglichen, und wenn die Farbdifferenz kleiner als \emph{Max. Delta} ist, trägt dieses Pixel zum Endergebnis bei. 
+
+Der Quellcode hat zwei äußere Schleife, die über die Zeilen und Spalten iterieren. Dann wird pro Farbkanal den Pixelwert berechnet, wo man die Eingangswerte mit den Filterkernwerten multipliziert. Die Multiplikation selbst hat auch zwei Schleifen, die über den Filterkern iterieren.   
+
+
+\begin{figure}
+\centering
+\includegraphics[scale=0.9]{graphs/sgb-grid.pdf}
+\caption{Selective Gaussian Blur. Schematische Darstellung}
+\label{fig:sgb-grid}
+\end{figure} 
+
+
 \paragraph{Portierung}
+Wenn man den GIMP-Code genauer anschaut, sieht man, dass der GIMP-Code zwei Implementierungen hat: normale C-Implementierung und optimierte MMX-Implementierung. Der Quelldatei hat insgesamt 853 Zeilen, 643 davon sind C Code. 
+
+Zuerst haben wir die C-Implementierung untersucht, um zu verstehen, wie genau das Filter funktioniert. Bei der Portierung nach GEGL müssen alle GEGL-Schnittstellen angepasst werden. Worauf auch beachtet werden muss, dass GIMP in Integers rechnet und GEGL in Floats. Der Zugriff zu Bilddaten ist innerhalb eines Tiles, d.h. die Randpixels müssen richtig bearbeitet werden. 
+
+Nach der ersten Portierung kamen die Zeitmessungen. Die Ausführungszeit von GEGL Version war schlechter als die langsame C-Implementierung von GIMP\footnote{Das Testsystem bei der Laufzeitmessung war: Intel® CoreTM i5-2520M Processor, 8 GB RAM, Debian GNU/Linux 7 amd64. Das Testbild war 512x512 Pixels groß. Filterparameter waren: Radius 20, Delta 50.}. Die Laufzeitmessungen sind in (\autoref{fig:sgb-graph-1}) dargestellt.
+
+Die erste Vermutung war, dass das Rechnen in Floats aufwändig ist. Dann haben wir ein Integer Farbformat benutzt, das 8 Bit pro Farbkanal verwendet. Die Berechnung in Integers dauert noch länger.
+
+Der nächste Schritt war die Optimierung. Mithilfe des Intel® VTuneTM Profilers haben wir den Sourcecode nach kritischen Stellen untersucht. Die Optimierung ist ein iterativer Prozess, wo man profiliert, ändert kritische Stelle, danach neu profiliert und vergleicht die Laufzeiten. Sehr große Rolle haben die Schleifenanordnung  und die if-Statements gespielt. Nach der Optimierung haben wir eine neue Codestruktur bekommen. Die Laufzeit nach der Optimierung war 3,179s gegen 3.567s in GIMP Integer und 1.397s in GIMP MMX Versionen. Is es schon besser als GIMP Integer-Implementierung, aber die MMX-Implementierung bleibt trotzdem schnell.
+
+MMX Implementierung verwenden MMX Instruktionen zur Beschleunigung. MMX ist eine Befehlssatzerweiterung mit der SIMD-Architektur. Ein MMX Befehl kann gleichzeitig bis 4 Operanden bearbeiten. Jeder Pixel kann ganz berechnet werden, ohne jeden Farbkanal getrennt zu berechnen. MMX arbeitet nur mit Integers, was für die GEGL-Operation nicht ganz passt. Dafür stehen SSE Instruktionen zur Verfügung. Obwohl der Compiler den Code mithilfe von SSE Instruktionen optimiert, ist diese Optimierung nicht immer das beste.
+
+Der kritischer Abschnitt innerhalb aller Schleifen wurde mit dem SSE Code manuell umgeschrieben. Dies hat einen merkbaren Speedup gegen den Float Code
+gezeigt. Die endgültige Ausführungszeiten nach der Optimierung sequentieller Version sind in \autoref{fig:sgb-graph-2} zu sehen. Die GIMP MMX bleibt das schnellste sequentielle Implementierung, es lässt sich durch GEGL Overhead erklären.
+\begin{figure}
+\centering
+\includegraphics[scale=0.75]{graphs/sgb-graph-1.png}
+\caption{Selective Gaussian Blur. Laufzeiten nach der Portierung}
+\label{fig:sgb-graph-1}
+\end{figure} 
+
+\begin{figure}
+\centering
+\includegraphics[scale=0.75]{graphs/sgb-graph-2.png}
+\caption{Selective Gaussian Blur. Laufzeiten nach der Optimierung}
+\label{fig:sgb-graph-2}
+\end{figure} 
+ 
+
 \paragraph{Parallelisierung}
 \subparagraph{OpenMP}
