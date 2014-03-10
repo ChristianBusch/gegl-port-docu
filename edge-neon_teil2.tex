@@ -5,11 +5,12 @@
 %Bild Eingabe (Duck / matting-global / car-stack?)
 %Vergleich Ausgabe bei Eingabe mit gleichen Parametern GIMP – GEGL Bilder
 %Ergebnis vom Diff
-Trotz sehr aufwändiger Suche und Behandlung, auch mehrfachen Neuanfang konnten wir einen Fehler bei der Kachelzerlegung nicht fixen.  
-Unerwarteter Weise werden horizontale Kachelränder etwas verzärrt.
-Anscheinend behandeln diesen Punkt GEGL und GIMP nicht gleichermaßen.
+Trotz sehr aufwändiger Suche und Behandlung, auch mehrfaches Neuanfangs konnten wir einen Fehler bei der Kachelzerlegung nicht fixen.  
+Unerwarteter Weise werden horizontale Kachelränder etwas verzerrt, wobei in den allermeisten Bildern die angesprochene Verzerrung so unauffällig ist, dass man nach dieser gezielt suchen muss.
+Anscheinend behandelt GEGL diesen Punkt nicht gleichermaßen wie GIMP.
+Da wir aber auch dieses Filter gern commiten würden, werden wir uns mit GEGL-Leuten in Verbindung setzen und um Hinweise bitten.
 
-Wird das Bild nur in senkrechte oder keine Kacheln zerlegt, so stimmen die AUsgaben von GEGL und GIMP überein.
+Wird das Bild nur in senkrechte oder keine Kacheln zerlegt, so stimmen die Ausgaben von GEGL und GIMP überein.
 \paragraph{Laufzeit}
 %X Durchläufe in Diagram abtragen?
 %System beschreiben (Hardware, Software, Umgebungsvariablen) !!!
@@ -17,4 +18,37 @@ Wird das Bild nur in senkrechte oder keine Kacheln zerlegt, so stimmen die AUsga
 %Statistische Analyse ?!
 %Aus Debug-Output Diagramm erstellen um Anteil des Filters an Gesamtlaufzeit zu verdeutlichen
 
-TEIL2
+\begin{table}[H]
+\centering
+\begin{tabular}{c p{2cm}p{2cm}p{2cm}}
+\toprule
+\textbf{\#Thread} & \textbf{Lenna} & \textbf{Wolf} & \textbf{Raupe} \\
+
+\cmidrule(r){1-4}
+
+\multicolumn{4}{c}{Conservative (ohne DA, static)} 	\\
+4d 	& 0.252		&1.124		&6.822			\\
+4 	& 0.252		&4.123		&6.96 		 	\\
+2	& 0.270		&1.454		&8.603			\\
+1	& 0.314		&2.157		&12.438 			\\
+
+\cmidrule(r){1-4}
+
+\multicolumn{4}{c}{Sections (ohne DA, static)} 		\\
+2*2 	& 0.254		&1.222		&7.412 		 	\\
+2*1	& 0.280		&1.571		&9.366 		 	\\
+
+\cmidrule(r){1-4}
+
+\multicolumn{4}{c}{Conservative (mit DA, static)}	\\
+4d	& 0.246		& 1.130		& 6.761			\\
+4 	& 0.248		&1.139		& 6.792		 	\\
+2	& 0.268		&1.471		& 8.685 		 	\\
+1	& 0.318		&2.203		&12.772			\\
+
+\bottomrule
+\end{tabular}
+\caption{Laufzeit von Neon in verschiedenen Konfigurationen}
+\label{tab:NEON_runtime}
+\end{table}
+
