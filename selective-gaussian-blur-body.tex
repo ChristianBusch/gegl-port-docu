@@ -45,7 +45,7 @@ gegen das Weichzeichnen geschützt werden.
 
 Der Algorithmus funktioniert pixelweise. Jeder Ausgangspixel wird separat bearbeitet, für jeden Pixel werden Werte für Farbkanäle einzeln berechnet. Bei der Berechnung werden benachbarte Pixelwerte mit einer Faltungsmatrix multipliziert, was in \autoref{fig:sgb-grid} dargestellt ist. Die Faltungsmatrix ist 2 * \emph{Radius} groß. Bei der Multiplikation wird jedes benachbarte Pixel mit dem zentralen Eingangspixel verglichen, und wenn die Farbdifferenz kleiner als \emph{Max. Delta} ist, trägt dieses Pixel zum Endergebnis bei. 
 
-Der Quellcode hat zwei äußere Schleife, die über die Zeilen und Spalten iterieren. Dann wird pro Farbkanal den Pixelwert berechnet, wo man die Eingangswerte mit den Filterkernwerten multipliziert. Die Multiplikation selbst hat auch zwei Schleifen, die über den Filterkern iterieren.   
+Der Quellcode hat zwei äußere Schleifen, die über die Zeilen und Spalten iterieren. Dann wird pro Farbkanal den Pixelwert berechnet, wo man die Eingangswerte mit den Filterkernwerten multipliziert. Die Multiplikation selbst hat auch zwei Schleifen, die über den Filterkern iterieren.   
 
 
 \begin{figure}
