@@ -289,7 +289,7 @@ Das resultierende Bild von GEGL Filter hat einen kleinen globalen Fehler im Verg
 \paragraph{Laufzeit}
 \autoref{tab:sgb} enthält wichtigste Daten über die Laufzeit dieses Filters in verschiedenen Konfigurationen. Alle Angaben in Sekunden. Messungen an Intel® Core i5-2520M Processor, 8 GB RAM unter Debian GNU/Linux 7 amd64. Das Testbild war 512x512 Pixel groß. Filterparameter waren: Radius 20, Delta 50. Es wurde die Ausführungszeit für die gesamte GEGL Operation mit Bildeinlesen, Bearbeiten, Speichern gemessen.
 
-Man sieht, dass die Ausführungszeit von der Threadszahl abhängt. Deswegen soll die Threadszahl empirisch festgestellt werden. Erziehler Speedup: der bester Speedup im Vergleich zu der schnellsten GIMP MMX Version wurde mit 4 Threads erreicht und beträgt 1.13.
+Man sieht, dass die Ausführungszeit von der Threadszahl abhängt. Deswegen soll die Threadszahl empirisch festgestellt werden. Erzielter Speedup: der bester Speedup im Vergleich zu der schnellsten GIMP MMX Version wurde mit 4 Threads erreicht und beträgt 1.13.
 \begin{table}[H]
 \centering
 \begin{tabular}{lrrrrr}
