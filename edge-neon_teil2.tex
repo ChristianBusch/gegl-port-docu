@@ -78,7 +78,8 @@ Zusammenfassend kann man volgendes sagen:
 \item Sections sind in diesem Filter eher ungeeignet (allgemeine Tests ob sections in OpenMP effizient abgearbeitet werden wären erwünscht).
 \item Bei geringen Threadszahlen ist der konservative Ansatz mit Datenabhängigkeit wegen der besseren Cache-Ausnutzung (vgl. zu Kapitel \ref{paragraph:neon_filter}:Parallelisierung) die beste Wahl.
 \item Mit steigender Threadszahl wird der konservative Ansatz ohne Datenabhängigkeit zum Spitzenreiter.
-\item Erzielter SpeedUp: Beste allgemeine 1-Thread-Zeit/Beste allgemeine 4-Thread-Zeit
+\item Erzielter SpeedUp: $\frac{Beste allgemeine 1-Thread-Zeit}{Beste allgemeine 4-Thread-Zeit:}$
+
 lenna: 1.2764, wolf: 1.9190, raupe: 1.8312
 \end{itemize}
 
